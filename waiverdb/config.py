@@ -1,0 +1,39 @@
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+
+class Config(object):
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+    JOURNAL_LOGGING = False
+    HOST = '0.0.0.0'
+    PORT = 5004
+    PRODUCTION = False
+    SHOW_DB_URI = False
+    SECRET_KEY = 'replace-me-with-something-random'
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+    PRODUCTION = True
+
+
+class DevelopmentConfig(Config):
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    TRAP_BAD_REQUEST_ERRORS = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////var/tmp/waiverdb_db.sqlite'
+    SHOW_DB_URI = True
+
+
+class TestingConfig(Config):
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    TRAP_BAD_REQUEST_ERRORS = True
+    TESTING = True

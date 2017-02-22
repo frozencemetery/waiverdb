@@ -1,0 +1,9 @@
+# This is a list of pypi packages to be installed into virtualenv. Alternatively,
+# you can install these as RPMs instead of pypi packages. 
+
+Flask
+Flask-RESTful
+Flask-SQLAlchemy
+SQLAlchemy
+
+pytest >= 2.4.2

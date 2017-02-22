@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+*.swp
+*__pycache__*
+conf/settings.py
+*.sqlite
+*.egg*
+/env*/
+test_env
+.cache
