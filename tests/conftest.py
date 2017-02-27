@@ -39,29 +39,20 @@ def db(app, request):
     request.addfinalizer(teardown)
     return db
 
-@pytest.fixture(scope='function')
-def session(db, request):
-    """Creates a new database session for a test."""
+@pytest.yield_fixture
+def session(db, monkeypatch):
+    """Patch Flask-SQLAlchemy to use a specific connection"""
     connection = db.engine.connect()
     transaction = connection.begin()
 
-    # https://github.com/mitsuhiko/flask-sqlalchemy/issues/345
-    class _dict(dict):
-        def __nonzero__(self):
-            return True
+    # Patch Flask-SQLAlchemy to use our connection
+    monkeypatch.setattr(db, 'get_engine', lambda *args: connection)
 
-    options = dict(bind=connection, binds=_dict())
-    session = db.create_scoped_session(options=options)
+    yield db.session
 
-    db.session = session
-
-    def teardown():
-        transaction.rollback()
-        connection.close()
-        session.remove()
-
-    request.addfinalizer(teardown)
-    return session
+    db.session.remove()
+    transaction.rollback()
+    connection.close()
 
 @pytest.yield_fixture
 def client(app):
