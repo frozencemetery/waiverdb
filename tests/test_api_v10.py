@@ -11,6 +11,7 @@
 
 import pytest
 import json
+from .utils import create_waiver
 
 def test_create_waiver(client, session):
     data = {
@@ -38,3 +39,20 @@ def test_create_waiver_with_malformed_data(client):
     res_data = json.loads(r.data)
     assert r.status_code == 400
     assert 'invalid literal for int()' in res_data['message']['result_id']
+
+def test_get_waiver(client, session):
+    # create a new waiver
+    waiver = create_waiver(session, result_id=123, username='foo',
+            product_version='foo-1', comment='bla bla bla')
+    r = client.get('/api/v1.0/waivers/%s' % waiver.id)
+    res_data = json.loads(r.data)
+    assert r.status_code == 200
+    assert res_data['username'] == waiver.username
+    assert res_data['result_id'] == waiver.result_id
+    assert res_data['product_version'] == waiver.product_version
+    assert res_data['waived'] == True
+    assert res_data['comment'] == waiver.comment
+
+def test_404_for_nonexistent_waiver(client, session):
+    r = client.get('/api/v1.0/waivers/foo')
+    assert r.status_code == 404

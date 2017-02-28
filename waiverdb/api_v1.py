@@ -11,13 +11,14 @@
 #
 
 from flask import Blueprint
-from flask_restful import reqparse
-from werkzeug.exceptions import HTTPException
+from flask_restful import Resource, Api, reqparse, marshal_with
+from werkzeug.exceptions import HTTPException, BadRequest, NotFound
 
 from waiverdb.models import db, Waiver
-from waiverdb.utils import to_json
+from waiverdb.fields import waiver_fields
 
-api = Blueprint('api_v1', __name__)
+api_v1 = (Blueprint('api_v1', __name__))
+api = Api(api_v1)
 
 # RP contains request parsers (reqparse.RequestParser).
 #    Parsers are added in each 'resource section' for better readability
@@ -29,20 +30,28 @@ RP['create_waiver'].add_argument('waived', type=bool, required=True, location='j
 RP['create_waiver'].add_argument('product_version', type=str, required=True, location='json')
 RP['create_waiver'].add_argument('comment', type=str, default=None, location='json')
 
-@api.route('/waivers/', methods=['POST'])
-@to_json
-def create_waiver():
-    try:
+
+class WaiversResource(Resource):
+    @marshal_with(waiver_fields)
+    def post(self):
         args = RP['create_waiver'].parse_args()
-    except HTTPException as error:
-        return error.data, error.code
+        # hardcode the username for now
+        username = 'mjia'
+        waiver = Waiver(args['result_id'], username, args['product_version'], args['waived'],
+                args['comment'])
+        db.session.add(waiver)
+        db.session.commit()
+        return waiver, 201
 
-    # hardcode the username for now
-    username = 'mjia'
 
-    waiver = Waiver(args['result_id'], username, args['product_version'], args['waived'],
-            args['comment'])
+class WaiverResource(Resource):
+    @marshal_with(waiver_fields)
+    def get(self, waiver_id):
+        try:
+            return Waiver.query.get_or_404(waiver_id)
+        except:
+            raise NotFound('Waiver not found')
 
-    db.session.add(waiver)
-    db.session.commit()
-    return waiver, 201
+# set up the Api resource routing here
+api.add_resource(WaiversResource, '/waivers/')
+api.add_resource(WaiverResource, '/waivers/<int:waiver_id>')

@@ -13,7 +13,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from waiverdb.logger import init_logging
-from waiverdb.api_v1 import api as api_v1
+from waiverdb.api_v1 import api_v1
 from waiverdb.models import db
 
 def load_default_config(app):

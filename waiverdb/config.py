@@ -19,6 +19,9 @@ class Config(object):
     PRODUCTION = False
     SHOW_DB_URI = False
     SECRET_KEY = 'replace-me-with-something-random'
+    # need to explicitly turn this off
+    # https://github.com/flask-restful/flask-restful/issues/449
+    ERROR_404_HELP = False
 
 
 class ProductionConfig(Config):
