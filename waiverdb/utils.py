@@ -10,7 +10,8 @@
 # GNU General Public License for more details.
 
 import datetime
-from flask import request, url_for
+import functools
+from flask import request, url_for, jsonify
 from flask_restful import marshal
 from waiverdb.fields import waiver_fields
 from werkzeug.exceptions import NotFound
@@ -59,3 +60,20 @@ def json_collection(query, page=1, limit=10):
     pages['first'] = url_for(request.endpoint, page=1, _external=True, **query_pairs)
     pages['last'] = url_for(request.endpoint, page=p.pages, _external=True, **query_pairs)
     return pages
+
+def jsonp(func):
+    """Wraps Jsonified output for JSONP requests."""
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        callback = request.args.get('callback', False)
+        if callback:
+            resp = jsonify(func(*args, **kwargs))
+            resp.set_data('{}({})'.format(
+                str(callback),
+                resp.get_data()
+            ))
+            resp.mimetype = 'application/javascript'
+            return resp
+        else:
+            return func(*args, **kwargs)
+    return wrapped

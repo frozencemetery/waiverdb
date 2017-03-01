@@ -157,3 +157,9 @@ def test_filtering_waivers_by_since(client, session):
     res_data = json.loads(r.data)
     assert r.status_code == 200
     assert len(res_data['data']) == 0
+
+def test_jsonp(client, session):
+    waiver = create_waiver(session, result_id=123, username='foo', product_version='foo-1')
+    r = client.get('/api/v1.0/waivers/%s?callback=jsonpcallback' % waiver.id)
+    assert r.mimetype == 'application/javascript'
+    assert 'jsonpcallback' in r.data

@@ -16,7 +16,7 @@ from werkzeug.exceptions import HTTPException, BadRequest, NotFound
 from sqlalchemy.sql.expression import func
 
 from waiverdb.models import db, Waiver
-from waiverdb.utils import reqparse_since, json_collection
+from waiverdb.utils import reqparse_since, json_collection, jsonp
 from waiverdb.fields import waiver_fields
 
 api_v1 = (Blueprint('api_v1', __name__))
@@ -44,7 +44,7 @@ RP['get_waivers'].add_argument('page', default=1, type=int, location='args')
 RP['get_waivers'].add_argument('limit', default=10, type=int, location='args')
 
 class WaiversResource(Resource):
-
+    @jsonp
     def get(self):
         args = RP['get_waivers'].parse_args()
         query = Waiver.query.order_by(Waiver.timestamp.desc())
@@ -68,6 +68,7 @@ class WaiversResource(Resource):
             query = query.filter(Waiver.id.in_(subquery))
         return json_collection(query, args['page'], args['limit'])
 
+    @jsonp
     @marshal_with(waiver_fields)
     def post(self):
         args = RP['create_waiver'].parse_args()
@@ -81,6 +82,7 @@ class WaiversResource(Resource):
 
 
 class WaiverResource(Resource):
+    @jsonp
     @marshal_with(waiver_fields)
     def get(self, waiver_id):
         try:
