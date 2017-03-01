@@ -16,10 +16,8 @@ import pytest
 from waiverdb.app import create_app, init_db
 
 @pytest.fixture(scope='session')
-def app(tmpdir_factory, request):
+def app(request):
     app = create_app('waiverdb.config.TestingConfig')
-    db_file = tmpdir_factory.mktemp('waiverdb').join('db.sqlite')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % db_file
     # Establish an application context before running the tests.
     ctx = app.app_context()
     ctx.push()
@@ -31,12 +29,9 @@ def app(tmpdir_factory, request):
     return app
 
 @pytest.fixture(scope='session')
-def db(app, request):
+def db(app):
     """Session-wide test database."""
     db = init_db(app)
-    def teardown():
-        db.drop_all()
-    request.addfinalizer(teardown)
     return db
 
 @pytest.fixture(scope='function')
