@@ -9,3 +9,4 @@ conf/settings.py
 test_env
 .cache
 docs/_build
+/rpmbuild-output/

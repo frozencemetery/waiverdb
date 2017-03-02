@@ -12,12 +12,27 @@
 
 node('rcm-tools-jslave-rhel-7') {
     checkout scm
-    stage('Test') {
+    stage('Build SRPM') {
+        sh './rpmbuild.sh -bs'
+        archiveArtifacts artifacts: 'rpmbuild-output/**'
+    }
+    /* We take a flock on the mock configs, to avoid multiple unrelated jobs on 
+     * the same Jenkins slave trying to use the same mock root at the same 
+     * time, which will error out. */
+    stage('Build RPM (EPEL7)') {
         sh """
-        virtualenv .
-        source bin/activate
-        pip install -r requirements.txt
-        py.test tests/
+        mkdir -p mock-result/el7
+        flock /etc/mock/epel-7-x86_64.cfg \
+        /usr/bin/mock --resultdir=mock-result/el7 -r epel-7-x86_64 --clean --rebuild rpmbuild-output/*.src.rpm
         """
+        archiveArtifacts artifacts: 'mock-result/el7/**'
+    }
+    stage('Build RPM (F25)') {
+        sh """
+        mkdir -p mock-result/f25
+        flock /etc/mock/fedora-25-x86_64.cfg \
+        /usr/bin/mock --resultdir=mock-result/f25 -r fedora-25-x86_64 --clean --rebuild rpmbuild-output/*.src.rpm
+        """
+        archiveArtifacts artifacts: 'mock-result/f25/**'
     }
 }

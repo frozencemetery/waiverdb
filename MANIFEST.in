@@ -1,0 +1,10 @@
+global-exclude *.pyc *.pyo
+include README.md
+include COPYING
+include requirements.txt
+include tests/*.py
+include pytest.ini
+include tox.ini
+include runapp.py
+recursive-include conf *
+recursive-include docs *.py *.rst Makefile
