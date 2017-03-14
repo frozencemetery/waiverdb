@@ -13,8 +13,10 @@ import pytest
 import json
 from .utils import create_waiver
 import datetime
+from mock import patch
 
-def test_create_waiver(client, session):
+@patch('waiverdb.auth.get_user', return_value=('foo', {}))
+def test_create_waiver(mocked_get_user, client, session, monkeypatch):
     data = {
         'result_id': 123,
         'product_version': 'fool-1',
@@ -25,13 +27,14 @@ def test_create_waiver(client, session):
             content_type='application/json')
     res_data = json.loads(r.data)
     assert r.status_code == 201
-    assert res_data['username'] == 'mjia'
+    assert res_data['username'] == 'foo'
     assert res_data['result_id'] == 123
     assert res_data['product_version'] == 'fool-1'
     assert res_data['waived'] == True
     assert res_data['comment'] == 'it broke'
 
-def test_create_waiver_with_malformed_data(client):
+@patch('waiverdb.auth.get_user', return_value=('foo', {}))
+def test_create_waiver_with_malformed_data(mocked_get_user, client):
     data = {
         'result_id': 'wrong id',
     }

@@ -10,7 +10,7 @@
 # GNU General Public License for more details.
 #
 
-from flask import Blueprint
+from flask import Blueprint, request
 from flask_restful import Resource, Api, reqparse, marshal_with
 from werkzeug.exceptions import HTTPException, BadRequest, NotFound
 from sqlalchemy.sql.expression import func
@@ -18,6 +18,7 @@ from sqlalchemy.sql.expression import func
 from waiverdb.models import db, Waiver
 from waiverdb.utils import reqparse_since, json_collection, jsonp
 from waiverdb.fields import waiver_fields
+import waiverdb.auth
 
 api_v1 = (Blueprint('api_v1', __name__))
 api = Api(api_v1)
@@ -71,14 +72,13 @@ class WaiversResource(Resource):
     @jsonp
     @marshal_with(waiver_fields)
     def post(self):
+        user, headers = waiverdb.auth.get_user(request)
         args = RP['create_waiver'].parse_args()
-        # hardcode the username for now
-        username = 'mjia'
-        waiver = Waiver(args['result_id'], username, args['product_version'], args['waived'],
+        waiver = Waiver(args['result_id'], user, args['product_version'], args['waived'],
                 args['comment'])
         db.session.add(waiver)
         db.session.commit()
-        return waiver, 201
+        return waiver, 201, headers
 
 
 class WaiverResource(Resource):
