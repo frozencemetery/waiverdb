@@ -35,3 +35,8 @@ values in `waiverdb/config.py`.
 You can run this test suite with the following command::
 
     $ py.test tests/
+
+To test against all supported versions of Python, you can use tox::
+
+    $ sudo dnf install python3-tox
+    $ tox
