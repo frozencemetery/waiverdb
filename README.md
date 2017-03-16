@@ -48,3 +48,10 @@ You can view the docs locally with::
     $ cd docs
     $ make html
     $ firefox _build/html/index.html
+
+## Viewing published fedmsgs
+
+You can view fedmsgs published when new waivers get created by doing::
+
+    $ fedmsg-relay --config-filename fedmsg.d/config.py &
+    $ fedmsg-tail --config fedmsg.d/config.py --no-validate --really-pretty

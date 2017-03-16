@@ -10,7 +10,11 @@
 # GNU General Public License for more details.
 
 import os
+
 from flask import Flask
+from sqlalchemy import event
+
+from waiverdb.events import fedmsg_new_waiver
 from waiverdb.logger import init_logging
 from waiverdb.api_v1 import api_v1
 from waiverdb.models import db
@@ -50,6 +54,7 @@ def create_app(config_obj=None):
     init_logging(app)
     # register blueprints
     app.register_blueprint(api_v1, url_prefix="/api/v1.0")
+    register_event_handlers(app)
     return app
 
 
@@ -57,3 +62,15 @@ def init_db(app):
     with app.app_context():
         db.create_all()
     return db
+
+
+def register_event_handlers(app):
+    """
+    Register SQLAlchemy event handlers with the application's session factory.
+
+    Args:
+        app (flask.Flask): The Flask object with the configured scoped session
+            attached as the ``session`` attribute.
+    """
+    if app.config['ZEROMQ_PUBLISH']:
+        event.listen(db.session, 'after_commit', fedmsg_new_waiver)

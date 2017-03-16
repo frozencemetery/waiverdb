@@ -11,6 +11,13 @@
 
 
 class Config(object):
+    """
+    A WaiverDB Flask configuration.
+
+    Attributes:
+        ZEROMQ_PUBLISH (bool): When true, ZeroMQ messages will be emitted via
+            fedmsg when new waivers are created.
+    """
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite://'
     JOURNAL_LOGGING = False
@@ -24,6 +31,7 @@ class Config(object):
     ERROR_404_HELP = False
     # Change it if the Kerberos service is not running on which the waiverdb is run.
     KERBEROS_HTTP_HOST = None
+    ZEROMQ_PUBLISH = True
 
 
 class ProductionConfig(Config):
