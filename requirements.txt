@@ -9,3 +9,7 @@ kerberos >= 1.1.1
 
 pytest >= 2.4.2
 mock
+
+# Documentation requirements
+sphinx
+sphinxcontrib-httpdomain

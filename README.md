@@ -40,3 +40,11 @@ To test against all supported versions of Python, you can use tox::
 
     $ sudo dnf install python3-tox
     $ tox
+
+## Building the docs
+
+You can view the docs locally with::
+
+    $ cd docs
+    $ make html
+    $ firefox _build/html/index.html

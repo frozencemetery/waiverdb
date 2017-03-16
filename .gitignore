@@ -8,3 +8,4 @@ conf/settings.py
 /env*/
 test_env
 .cache
+docs/_build
