@@ -33,14 +33,3 @@ class Waiver(db.Model):
         return '%s(result_id=%r, username=%r, product_version=%r, waived=%r)' % (
                 self.__class__.__name__, self.result_id, self.username,
                 self.product_version, self.waived)
-
-    def __json__(self):
-        return {
-            'id': self.id,
-            'result_id': self.result_id,
-            'username': self.username,
-            'product_version': self.product_version,
-            'waived': self.waived,
-            'comment': self.comment,
-            'timestamp': self.timestamp.isoformat(),
-        }

@@ -3,21 +3,15 @@
 # This file is part of WaiverDB.
 # Copyright © 2017 Red Hat, Inc.
 #
-# This copyrighted material is made available to anyone wishing to use,
-# modify, copy, or redistribute it subject to the terms and conditions
-# of the GNU General Public License v.2, or (at your option) any later
-# version.  This program is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY expressed or implied, including the
-# implied warranties of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE.  See the GNU General Public License for more details.  You
-# should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-# Any Red Hat trademarks that are incorporated in the source
-# code or documentation are not subject to the GNU General Public
-# License and may only be used or replicated with the express permission
-# of Red Hat, Inc.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 """
 This module contains a set of `SQLAlchemy event`_ hooks.
 
@@ -32,12 +26,14 @@ from __future__ import unicode_literals
 from gettext import gettext as _
 import logging
 
+from flask_restful import marshal
 # fedmsg is an optional dependency and may not be present
 try:
     import fedmsg
 except ImportError:
     fedmsg = None
 
+from waiverdb.fields import waiver_fields
 from waiverdb.models import Waiver
 
 
@@ -89,4 +85,4 @@ def fedmsg_new_waiver(session):
     for row in session.identity_map.values():
         if isinstance(row, Waiver):
             _log.debug('Publishing fedmsg for %r', row)
-            fedmsg.publish(topic='waiver.new', msg=row.__json__())
+            fedmsg.publish(topic='waiver.new', msg=marshal(row, waiver_fields))
