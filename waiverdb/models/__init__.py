@@ -9,5 +9,5 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-from .base import db
-from .waivers import Waiver
+from .base import db  # noqa: F401
+from .waivers import Waiver  # noqa: F401

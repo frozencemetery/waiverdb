@@ -21,7 +21,8 @@ except ImportError:
 from socket import gethostname
 from werkzeug.exceptions import Unauthorized, Forbidden
 
-#Inspired by https://github.com/mkomitee/flask-kerberos/blob/master/flask_kerberos.py
+
+# Inspired by https://github.com/mkomitee/flask-kerberos/blob/master/flask_kerberos.py
 class KerberosAuthenticate(object):
 
     def __init__(self):
@@ -87,6 +88,7 @@ class KerberosAuthenticate(object):
         elif rc != kerberos.AUTH_GSS_CONTINUE:
             raise Forbidden("Invalid Kerberos ticket")
         return kerberos_user, kerberos_token
+
 
 def get_user(request):
     user = None

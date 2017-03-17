@@ -10,10 +10,10 @@
 # GNU General Public License for more details.
 #
 
-import os
 import pytest
 
 from waiverdb.app import create_app, init_db
+
 
 @pytest.fixture(scope='session')
 def app(request):
@@ -28,11 +28,13 @@ def app(request):
     request.addfinalizer(teardown)
     return app
 
+
 @pytest.fixture(scope='session')
 def db(app):
     """Session-wide test database."""
     db = init_db(app)
     return db
+
 
 @pytest.yield_fixture
 def session(db, monkeypatch):
@@ -48,6 +50,7 @@ def session(db, monkeypatch):
     db.session.remove()
     transaction.rollback()
     connection.close()
+
 
 @pytest.yield_fixture
 def client(app):

@@ -9,8 +9,4 @@ setup(name='waiverdb',
       author_email='qa-devel@lists.fedoraproject.org',
       license='GPLv2+',
       packages=['waiverdb'],
-      package_dir={'waiverdb': 'waiverdb'},
-      #entry_points={
-      #    #TODO: register messaging plugins
-      #},
-)
+      package_dir={'waiverdb': 'waiverdb'})

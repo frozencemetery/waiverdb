@@ -12,6 +12,7 @@
 import datetime
 from .base import db
 
+
 class Waiver(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     result_id = db.Column(db.Integer, nullable=False)
