@@ -23,10 +23,12 @@ from flask_sqlalchemy import SignallingSession
 
 class NoZmqConfig(config.Config):
     ZEROMQ_PUBLISH = False
+    AUTH_METHOD = None
 
 
 class ZmqConfig(config.Config):
     ZEROMQ_PUBLISH = True
+    AUTH_METHOD = None
 
 
 @mock.patch('waiverdb.app.event.listen')

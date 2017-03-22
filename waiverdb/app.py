@@ -18,6 +18,7 @@ from waiverdb.events import fedmsg_new_waiver
 from waiverdb.logger import init_logging
 from waiverdb.api_v1 import api_v1
 from waiverdb.models import db
+from flask_oidc import OpenIDConnect
 
 
 def load_default_config(app):
@@ -48,6 +49,8 @@ def create_app(config_obj=None):
         raise Warning("You need to change the app.secret_key value for production")
     if app.config['SHOW_DB_URI']:
         app.logger.debug('using DBURI: %s' % app.config['SQLALCHEMY_DATABASE_URI'])
+    if app.config['AUTH_METHOD'] == 'OIDC':
+        app.oidc = OpenIDConnect(app)
     # initialize db
     db.init_app(app)
     # initialize logging

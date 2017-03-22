@@ -11,7 +11,6 @@
 #
 
 import pytest
-
 from waiverdb.app import create_app, init_db
 
 
@@ -59,3 +58,8 @@ def client(app):
     """
     with app.test_client() as client:
         yield client
+
+
+@pytest.fixture()
+def enable_kerberos(app, monkeypatch):
+    monkeypatch.setitem(app.config, 'AUTH_METHOD', 'Kerberos')

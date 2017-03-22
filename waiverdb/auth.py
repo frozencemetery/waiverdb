@@ -9,9 +9,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
+
 import os
 import kerberos
-from flask import current_app, Response
+from flask import current_app, Response, g
 # Starting with Flask 0.9, the _app_ctx_stack is the correct one,
 # before that we need to use the _request_ctx_stack.
 try:
@@ -93,12 +94,28 @@ class KerberosAuthenticate(object):
 def get_user(request):
     user = None
     headers = dict()
-    if 'KRB5_KTNAME' in os.environ:
-        header = request.headers.get("Authorization")
-        if not header:
+    if current_app.config['AUTH_METHOD'] == 'OIDC':
+        if 'Authorization' not in request.headers:
+            raise Unauthorized("No 'Authorization' header found.")
+        token = request.headers.get("Authorization").strip()
+        prefix = 'Bearer '
+        if not token.startswith(prefix):
+            raise Unauthorized('Authorization headers must start with %r' % prefix)
+        token = token[len(prefix):].strip()
+        required_scopes = [
+            'openid',
+            current_app.config['OIDC_REQUIRED_SCOPE'],
+        ]
+        validity = current_app.oidc.validate_token(token, required_scopes)
+        if validity is not True:
+            raise Unauthorized(validity)
+        user = g.oidc_token_info['username']
+    elif current_app.config['AUTH_METHOD'] == 'Kerberos':
+        if 'Authorization' not in request.headers:
             response = Response('Unauthorized', 401, {'WWW-Authenticate': 'Negotiate'})
             raise Unauthorized(response=response)
-        token = ''.join(header.split()[1:])
+        header = request.headers.get("Authorization")
+        token = ''.join(header.strip().split()[1:])
         user, kerberos_token = KerberosAuthenticate().process_request(token)
         # remove realm
         user = user.split("@")[0]

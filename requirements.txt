@@ -7,7 +7,9 @@ Flask-RESTful
 Flask-SQLAlchemy
 SQLAlchemy
 kerberos >= 1.1.1
+flask-oidc
 
+# packages for the unit tests
 pytest >= 2.4.2
 mock
 
