@@ -11,10 +11,10 @@
 
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from waiverdb.logger import init_logging
 from waiverdb.api_v1 import api_v1
 from waiverdb.models import db
+
 
 def load_default_config(app):
     # Load default config, then override that with a config file
@@ -31,6 +31,7 @@ def load_default_config(app):
     config_file = os.environ.get('WAIVERDB_CONFIG', default_config_file)
     if os.path.exists(config_file):
         app.config.from_pyfile(config_file)
+
 
 # applicaiton factory http://flask.pocoo.org/docs/0.12/patterns/appfactories/
 def create_app(config_obj=None):
@@ -50,6 +51,7 @@ def create_app(config_obj=None):
     # register blueprints
     app.register_blueprint(api_v1, url_prefix="/api/v1.0")
     return app
+
 
 def init_db(app):
     with app.app_context():

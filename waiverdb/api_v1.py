@@ -12,7 +12,7 @@
 
 from flask import Blueprint, request
 from flask_restful import Resource, Api, reqparse, marshal_with
-from werkzeug.exceptions import HTTPException, BadRequest, NotFound
+from werkzeug.exceptions import BadRequest, NotFound
 from sqlalchemy.sql.expression import func
 
 from waiverdb.models import db, Waiver
@@ -43,6 +43,7 @@ RP['get_waivers'].add_argument('include_obsolete', type=bool, default=False, loc
 RP['get_waivers'].add_argument('since', location='args')
 RP['get_waivers'].add_argument('page', default=1, type=int, location='args')
 RP['get_waivers'].add_argument('limit', default=10, type=int, location='args')
+
 
 class WaiversResource(Resource):
     @jsonp
@@ -171,7 +172,7 @@ class WaiversResource(Resource):
         user, headers = waiverdb.auth.get_user(request)
         args = RP['create_waiver'].parse_args()
         waiver = Waiver(args['result_id'], user, args['product_version'], args['waived'],
-                args['comment'])
+                        args['comment'])
         db.session.add(waiver)
         db.session.commit()
         return waiver, 201, headers
@@ -193,6 +194,7 @@ class WaiverResource(Resource):
             return Waiver.query.get_or_404(waiver_id)
         except:
             raise NotFound('Waiver not found')
+
 
 # set up the Api resource routing here
 api.add_resource(WaiversResource, '/waivers/')

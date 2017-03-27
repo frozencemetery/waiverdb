@@ -16,6 +16,7 @@ import json
 from werkzeug.exceptions import Unauthorized
 import waiverdb.auth
 
+
 class TestKerberosAuthentication(object):
 
     def test_keytab_file_is_not_set_should_raise_error(self):
@@ -36,7 +37,7 @@ class TestKerberosAuthentication(object):
     @mock.patch('kerberos.authGSSServerClean')
     @mock.patch('kerberos.getServerPrincipalDetails')
     def test_authorized(self, principal, clean, name, response, step, init,
-        client, monkeypatch, session):
+                        client, monkeypatch, session):
         monkeypatch.setenv('KRB5_KTNAME', '/etc/foo.keytab')
         data = {
             'result_id': 123,
@@ -45,9 +46,9 @@ class TestKerberosAuthentication(object):
             'comment': 'it broke',
         }
         r = client.post('/api/v1.0/waivers/',  data=json.dumps(data),
-                content_type='application/json',
-                headers={'Authorization': 'Negotiate CTOKEN'})
+                        content_type='application/json',
+                        headers={'Authorization': 'Negotiate CTOKEN'})
         assert r.status_code == 201
         assert r.headers.get('WWW-Authenticate') == 'negotiate STOKEN'
-        res_data = json.loads(r.data)
+        res_data = json.loads(r.data.decode('utf-8'))
         assert res_data['username'] == 'foo'
