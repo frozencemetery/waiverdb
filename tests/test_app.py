@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import mock
 
 from waiverdb import app, config
+from flask_sqlalchemy import SignallingSession
 
 
 class NoZmqConfig(config.Config):
@@ -38,4 +39,4 @@ def test_register_events_no_zmq(mock_listen):
 def test_register_events_zmq(mock_listen):
     app.create_app(ZmqConfig)
     mock_listen.assert_called_once_with(
-        app.db.session, 'after_commit', app.fedmsg_new_waiver)
+        SignallingSession, 'after_commit', app.fedmsg_new_waiver)

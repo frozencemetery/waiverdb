@@ -73,4 +73,7 @@ def register_event_handlers(app):
             attached as the ``session`` attribute.
     """
     if app.config['ZEROMQ_PUBLISH']:
-        event.listen(db.session, 'after_commit', fedmsg_new_waiver)
+        # A workaround for https://github.com/mitsuhiko/flask-sqlalchemy/pull/364
+        # can be removed after python-flask-sqlalchemy is upgraded to 2.2
+        from flask_sqlalchemy import SignallingSession
+        event.listen(SignallingSession, 'after_commit', fedmsg_new_waiver)
