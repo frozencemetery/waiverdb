@@ -30,6 +30,6 @@ class Waiver(db.Model):
         self.comment = comment
 
     def __repr__(self):
-        return '%s(result_id=%r, username=%r, product_version=%r, waived=%r)' % (
-                self.__class__.__name__, self.result_id, self.username,
-                self.product_version, self.waived)
+        return '%s(result_id=%r, username=%r, product_version=%r, waived=%r)' % \
+            (self.__class__.__name__, self.result_id, self.username, self.product_version,
+             self.waived)

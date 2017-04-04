@@ -45,7 +45,7 @@ class TestKerberosAuthentication(object):
             'waived': True,
             'comment': 'it broke',
         }
-        r = client.post('/api/v1.0/waivers/',  data=json.dumps(data),
+        r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
                         content_type='application/json',
                         headers={'Authorization': 'Negotiate CTOKEN'})
         assert r.status_code == 201
