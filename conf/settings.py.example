@@ -3,10 +3,7 @@
 SECRET_KEY = 'replace-me-with-something-random'
 #SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://dbuser:dbpassword@dbhost:dbport/dbname'
 SQLALCHEMY_DATABASE_URI = 'sqlite:////var/tmp/waiverdb_db.sqlite'
-FILE_LOGGING = False
-LOGFILE = '/var/log/waiverdb/waiverdb.log'
-SYSLOG_LOGGING = False
-STREAM_LOGGING = True
+JOURNAL_LOGGING = False
 #SHOW_DB_URI = False
-RUN_HOST= '0.0.0.0'
-RUN_PORT = 5004
+HOST= '0.0.0.0'
+PORT = 5004
