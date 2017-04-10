@@ -20,6 +20,7 @@ BuildRequires:  pytest
 BuildRequires:  python-mock
 BuildRequires:  pytest
 BuildRequires:  fedmsg
+BuildRequires:  python-flask-oidc
 BuildArch:      noarch
 Requires:       python-flask
 Requires:       python-sqlalchemy
@@ -28,6 +29,7 @@ Requires:       python-flask-sqlalchemy
 Requires:       python-kerberos
 Requires:       python-mock
 Requires:       fedmsg
+Requires:       python-flask-oidc
 
 %description
 WaiverDB is a companion service to ResultsDB, for recording waivers against test results.
