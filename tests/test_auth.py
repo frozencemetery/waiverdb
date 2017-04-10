@@ -67,7 +67,7 @@ class TestOIDCAuthentication(object):
         with pytest.raises(Unauthorized) as excinfo:
             request = mock.MagicMock()
             waiverdb.auth.get_user(request)
-        assert "No 'Authorization' header found" in str(excinfo.value)
+        assert "No 'Authorization' header found" in excinfo.value.get_description()
 
     @mock.patch.object(flask_oidc.OpenIDConnect, '_get_token_info')
     def test_get_user_with_invalid_token(self, mocked_get_token, session):
@@ -83,7 +83,7 @@ class TestOIDCAuthentication(object):
         request.headers.__contains__.side_effect = headers.__contains__
         with pytest.raises(Unauthorized) as excinfo:
             waiverdb.auth.get_user(request)
-        assert 'Token required but invalid' in str(excinfo.value)
+        assert 'Token required but invalid' in excinfo.value.get_description()
 
     @mock.patch.object(flask_oidc.OpenIDConnect, '_get_token_info')
     def test_get_user_good(self, mocked_get_token, session):
