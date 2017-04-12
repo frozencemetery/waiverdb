@@ -2,9 +2,10 @@ global-exclude *.pyc *.pyo
 include README.md
 include COPYING
 include requirements.txt
-include tests/*.py
 include pytest.ini
+include tests/*.py tests/client_secrets.json
 include tox.ini
 include runapp.py
+include fedmsg.d/*.py
 recursive-include conf *
 recursive-include docs *.py *.rst Makefile
