@@ -53,9 +53,7 @@ trap "rm -rf $workdir" EXIT
 outdir="$(readlink -f ./rpmbuild-output)"
 mkdir -p "$outdir"
 
-git archive --format=tar --prefix="${name}-${version}/" HEAD | gzip >"$workdir/${name}-${version}.tar.gz"
-git show HEAD:${name}.spec >"$workdir/${name}.spec"
-
+git archive --format=tar HEAD | tar -C "$workdir" -xf -
 if [ -n "$rpmrel" ] ; then
     # need to hack the version in the spec
     sed --regexp-extended --in-place \
@@ -63,17 +61,13 @@ if [ -n "$rpmrel" ] ; then
         -e "/^Version:/cVersion: ${rpmver}" \
         -e "/^Release:/cRelease: ${rpmrel}%{?dist}" \
         "$workdir/${name}.spec"
-    # inject %prep commands to also hack the Python module versions
-    # (beware the precarious quoting here...)
-    commands=$(cat <<EOF
-sed -i -e "/^version = /c\\\\version = '$version'" setup.py
-EOF
-)
-    awk --assign "commands=$commands" \
-        '{ print } ; /^%setup/ { print commands }' \
-        "$workdir/${name}.spec" >"$workdir/${name}.spec.injected"
-    mv "$workdir/${name}.spec.injected" "$workdir/${name}.spec"
+    # also hack the Python module version
+    sed --regexp-extended --in-place \
+        -e "/^version = /c\\version = '$version'" \
+        "$workdir/setup.py"
 fi
+( cd "$workdir" && python setup.py sdist )
+mv "$workdir"/dist/*.tar.gz "$workdir"
 
 rpmbuild \
     --define "_topdir $workdir" \
