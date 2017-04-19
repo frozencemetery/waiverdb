@@ -1,0 +1,8 @@
+[Unit]
+Description=WaiverDB Socket
+
+[Socket]
+ListenStream=/run/waiverdb/socket
+
+[Install]
+WantedBy=sockets.target

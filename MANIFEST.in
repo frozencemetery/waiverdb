@@ -7,5 +7,6 @@ include tests/*.py tests/client_secrets.json
 include tox.ini
 include runapp.py
 include fedmsg.d/*.py
+recursive-include systemd *
 recursive-include conf *
 recursive-include docs *.py *.rst Makefile

@@ -21,6 +21,8 @@ BuildRequires:  python-mock
 BuildRequires:  pytest
 BuildRequires:  fedmsg
 BuildRequires:  python-flask-oidc
+%{?systemd_requires}
+BuildRequires:  systemd
 BuildArch:      noarch
 Requires:       python-flask
 Requires:       python-sqlalchemy
@@ -42,6 +44,13 @@ WaiverDB is a companion service to ResultsDB, for recording waivers against test
 
 %install
 %py2_install
+install -d %{buildroot}%{_sysconfdir}/waiverdb
+install -p -m 0644 conf/settings.py.example %{buildroot}%{_sysconfdir}/waiverdb/settings.py
+install -d %{buildroot}%{_unitdir}
+install -m0644 \
+    systemd/%{name}.service \
+    systemd/%{name}.socket \
+    %{buildroot}%{_unitdir}
 
 %check
 export PYTHONPATH=%{buildroot}/%{python2_sitelib}
@@ -52,5 +61,19 @@ py.test tests/
 %doc README.md conf docs
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}*.egg-info
+%{_sysconfdir}/waiverdb
+%{_unitdir}/%{name}.service
+%{_unitdir}/%{name}.socket
+
+%post
+%systemd_post %{name}.service
+%systemd_post %{name}.socket
+
+%preun
+%systemd_preun %{name}.service
+%systemd_preun %{name}.socket
+
+%postun
+%systemd_postun_with_restart %{name}.service
 
 %changelog

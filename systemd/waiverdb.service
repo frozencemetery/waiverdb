@@ -1,0 +1,11 @@
+[Unit]
+Description=WaiverDB Daemon
+Requires=waiverdb.socket
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/gunicorn --bind unix:/run/waiverdb/socket \
+        waiverdb.wsgi:app
+
+[Install]
+WantedBy=multi-user.target
