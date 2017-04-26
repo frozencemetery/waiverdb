@@ -7,7 +7,7 @@ Release:        1%{?dist}
 Summary:        Service for waiving results in ResultsDB
 License:        GPLv2+
 URL:            https://pagure.io/waiverdb
-Source0:        %{name}-%{upstream_version}.tar.gz
+Source0:        https://files.pythonhosted.org/packages/source/w/%{name}/%{name}-%{upstream_version}.tar.gz
 
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
