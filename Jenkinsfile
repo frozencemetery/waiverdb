@@ -43,3 +43,11 @@ node('rcm-tools-jslave-rhel-7') {
         )
     }
 }
+node('rcm-tools-jslave-rhel-7-docker') {
+    checkout scm
+    stage('Build Docker container') {
+        unarchive mapping: ['mock-result/el7/': '.']
+        def el7_rpm = findFiles(glob: 'mock-result/el7/**/*.noarch.rpm')[0]
+        def image = docker.build 'waiverdb', ". --build-arg waiverdb_rpm=$el7_rpm"
+    }
+}
