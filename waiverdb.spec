@@ -32,7 +32,8 @@ Requires:       fedmsg
 Requires:       python-flask-oidc
 
 %description
-WaiverDB is a companion service to ResultsDB, for recording waivers against test results.
+WaiverDB is a companion service to ResultsDB, for recording waivers
+against test results.
 
 %prep
 %setup -q -n %{name}-%{upstream_version}
