@@ -29,6 +29,7 @@ node('rcm-tools-jslave-rhel-7') {
                 mkdir -p mock-result/el7
                 flock /etc/mock/epel-7-x86_64.cfg \
                 /usr/bin/mock --resultdir=mock-result/el7 -r epel-7-x86_64 --clean --rebuild rpmbuild-output/*.src.rpm
+                rpmlint -f rpmlint-config.py mock-result/el7/*.rpm
                 """
                 archiveArtifacts artifacts: 'mock-result/el7/**'
             },
@@ -37,6 +38,7 @@ node('rcm-tools-jslave-rhel-7') {
                 mkdir -p mock-result/f25
                 flock /etc/mock/fedora-25-x86_64.cfg \
                 /usr/bin/mock --resultdir=mock-result/f25 -r fedora-25-x86_64 --clean --rebuild rpmbuild-output/*.src.rpm
+                rpmlint -f rpmlint-config.py mock-result/f25/*.rpm
                 """
                 archiveArtifacts artifacts: 'mock-result/f25/**'
             },
