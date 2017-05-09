@@ -10,7 +10,7 @@
  * GNU General Public License for more details.
  */
 
-node('rcm-tools-jslave-rhel-7') {
+node('fedora') {
     try {
         checkout scm
         stage('Invoke Flake8') {
@@ -18,6 +18,10 @@ node('rcm-tools-jslave-rhel-7') {
         }
         stage('Invoke Pylint') {
             sh 'pylint --reports=n waiverdb'
+        }
+        stage('Build Docs') {
+            sh 'make -C docs html'
+            archiveArtifacts artifacts: 'docs/_build/html/**'
         }
         stage('Build SRPM') {
             sh './rpmbuild.sh -bs'
