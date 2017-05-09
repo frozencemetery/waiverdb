@@ -16,6 +16,9 @@ node('rcm-tools-jslave-rhel-7') {
         stage('Invoke Flake8') {
             sh 'flake8'
         }
+        stage('Invoke Pylint') {
+            sh 'pylint --reports=n waiverdb'
+        }
         stage('Build SRPM') {
             sh './rpmbuild.sh -bs'
             archiveArtifacts artifacts: 'rpmbuild-output/**'
