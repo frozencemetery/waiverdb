@@ -60,6 +60,30 @@ node('fedora') {
                 },
             )
         }
+        stage('Invoke Rpmdeplint') {
+            parallel (
+                'EPEL7': {
+                    sh """
+                    rpmdeplint check \
+                        --repo rhel7,http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/os/ \
+                        --repo rhel7-optional,http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/optional/os/ \
+                        --repo rhel7-extras,http://pulp.dist.prod.ext.phx2.redhat.com/content/dist/rhel/server/7/7Server/x86_64/extras/os/ \
+                        --repo epel7,http://dl.fedoraproject.org/pub/epel/7/x86_64/ \
+                        --arch x86_64 \
+                        mock-result/el7/*.noarch.rpm
+                    """
+                },
+                'F25': {
+                    sh """
+                    rpmdeplint check \
+                        --repo fedora,http://dl.fedoraproject.org/pub/fedora/linux/releases/25/Everything/x86_64/os/ \
+                        --repo updates,http://dl.fedoraproject.org/pub/fedora/linux/updates/25/x86_64/ \
+                        --arch x86_64 \
+                        mock-result/f25/*.noarch.rpm
+                    """
+                },
+            )
+        }
     } catch (e) {
         currentBuild.result = "FAILED"
         /* Can't use GIT_BRANCH because of this issue https://issues.jenkins-ci.org/browse/JENKINS-35230 */
