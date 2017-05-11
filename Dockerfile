@@ -1,4 +1,9 @@
 FROM centos:7
+LABEL \
+    name="WaiverDB application" \
+    vendor="WaiverDB developers" \
+    license="GPLv2+" \
+    build-date=""
 RUN yum -y install epel-release && yum -y clean all
 # The caller should build a waiverdb RPM package using ./rpmbuild.sh and then pass it in this arg.
 ARG waiverdb_rpm
