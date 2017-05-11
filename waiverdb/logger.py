@@ -11,6 +11,7 @@
 
 import logging
 import sys
+import systemd.journal
 
 
 def log_to_stdout(app, level=logging.INFO):
@@ -24,10 +25,6 @@ def log_to_stdout(app, level=logging.INFO):
 
 
 def log_to_journal(app, level=logging.INFO):
-    try:
-        import systemd.journal
-    except:
-        raise ValueError("systemd.journal module is not installed")
     journal_handler = systemd.journal.JournalHandler()
     journal_handler.setLevel(level)
     app.logger.addHandler(journal_handler)
