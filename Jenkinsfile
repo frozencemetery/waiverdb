@@ -102,10 +102,20 @@ node('rcm-tools-jslave-rhel-7-docker') {
         stage('Build Docker container') {
             unarchive mapping: ['mock-result/el7/': '.']
             def el7_rpm = findFiles(glob: 'mock-result/el7/**/*.noarch.rpm')[0]
-            /* Note that the docker.build step has some magic to guess the
-             * Dockerfile used, which will break if the build directory (here ".")
-             * is not the final argument in the string. */
-            def image = docker.build 'waiverdb', "--build-arg waiverdb_rpm=$el7_rpm ."
+            def appversion = sh(returnStdout: true, script: """
+                rpm2cpio ${el7_rpm} | \
+                cpio --quiet --extract --to-stdout ./usr/lib/python2.7/site-packages/waiverdb\\*.egg-info/PKG-INFO | \
+                awk '/^Version: / {print \$2}'
+            """).trim()
+            docker.withRegistry(
+                    'https://docker-registry.engineering.redhat.com/',
+                    'docker-registry-factory2-builder-sa-credentials') {
+                /* Note that the docker.build step has some magic to guess the
+                 * Dockerfile used, which will break if the build directory (here ".")
+                 * is not the final argument in the string. */
+                def image = docker.build "factory2/waiverdb:${appversion}", "--build-arg waiverdb_rpm=$el7_rpm ."
+                image.push()
+            }
         }
     } catch (e) {
         currentBuild.result = "FAILED"
