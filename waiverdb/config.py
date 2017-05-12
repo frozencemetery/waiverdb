@@ -21,7 +21,7 @@ class Config(object):
             fedmsg when new waivers are created.
     """
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+    DATABASE_URI = 'sqlite://'
     JOURNAL_LOGGING = False
     HOST = '0.0.0.0'
     PORT = 5004
@@ -45,7 +45,7 @@ class ProductionConfig(Config):
 class DevelopmentConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     TRAP_BAD_REQUEST_ERRORS = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////var/tmp/waiverdb_db.sqlite'
+    DATABASE_URI = 'sqlite:////var/tmp/waiverdb_db.sqlite'
     SHOW_DB_URI = True
     # The location of the client_secrets.json file used for API authentication
     OIDC_CLIENT_SECRETS = os.path.join(
