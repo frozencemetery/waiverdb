@@ -21,7 +21,7 @@ from waiverdb.models import db
 from flask_oidc import OpenIDConnect
 
 
-def load_default_config(app):
+def load_config(app):
     # Load default config, then override that with a config file
     if os.getenv('DEV') == 'true':
         default_config_obj = 'waiverdb.config.DevelopmentConfig'
@@ -34,8 +34,7 @@ def load_default_config(app):
         default_config_file = '/etc/waiverdb/settings.py'
     app.config.from_object(default_config_obj)
     config_file = os.environ.get('WAIVERDB_CONFIG', default_config_file)
-    if os.path.exists(config_file):
-        app.config.from_pyfile(config_file)
+    app.config.from_pyfile(config_file)
 
 
 # applicaiton factory http://flask.pocoo.org/docs/0.12/patterns/appfactories/
@@ -44,7 +43,7 @@ def create_app(config_obj=None):
     if config_obj:
         app.config.from_object(config_obj)
     else:
-        load_default_config(app)
+        load_config(app)
     if app.config['PRODUCTION'] and app.secret_key == 'replace-me-with-something-random':
         raise Warning("You need to change the app.secret_key value for production")
     if app.config['SHOW_DB_URI']:

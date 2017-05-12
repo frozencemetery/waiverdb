@@ -55,8 +55,6 @@ against test results.
 
 %install
 %py2_install
-install -d %{buildroot}%{_sysconfdir}/waiverdb
-install -p -m 0644 conf/settings.py.example %{buildroot}%{_sysconfdir}/waiverdb/settings.py
 install -d %{buildroot}%{_unitdir}
 install -m0644 \
     systemd/%{name}.service \
@@ -72,7 +70,6 @@ py.test tests/
 %doc README.md conf docs
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}*.egg-info
-%{_sysconfdir}/waiverdb
 %{_unitdir}/%{name}.service
 %{_unitdir}/%{name}.socket
 
