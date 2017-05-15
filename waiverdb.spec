@@ -16,6 +16,11 @@ BuildRequires:  python-sqlalchemy
 BuildRequires:  python-flask-restful
 BuildRequires:  python-flask-sqlalchemy
 BuildRequires:  python-kerberos
+%if 0%{?rhel} <= 7
+BuildRequires:  systemd-python
+%else
+BuildRequires:  python2-systemd
+%endif
 BuildRequires:  pytest
 BuildRequires:  python-mock
 BuildRequires:  pytest
@@ -29,6 +34,11 @@ Requires:       python-sqlalchemy
 Requires:       python-flask-restful
 Requires:       python-flask-sqlalchemy
 Requires:       python-kerberos
+%if 0%{?rhel} <= 7
+Requires:       systemd-python
+%else
+Requires:       python2-systemd
+%endif
 Requires:       python-mock
 Requires:       fedmsg
 Requires:       python-flask-oidc
