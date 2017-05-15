@@ -36,6 +36,8 @@ def load_config(app):
     app.config.from_object(default_config_obj)
     config_file = os.environ.get('WAIVERDB_CONFIG', default_config_file)
     app.config.from_pyfile(config_file)
+    if os.environ.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
 
 def populate_db_config(app):
