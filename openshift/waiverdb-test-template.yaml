@@ -198,6 +198,18 @@ objects:
               secretKeyRef:
                 name: "waiverdb-test-${TEST_ID}-secret"
                 key: flask-secret-key
+          readinessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+            httpGet:
+              path: /healthcheck
+              port: 8080
+          livenessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 30
+            httpGet:
+              path: /healthcheck
+              port: 8080
           # Limit to 384MB memory. This is probably *not* enough but it is 
           # necessary in the current environment to allow for 2 replicas and 
           # rolling updates, without hitting the (very aggressive) memory quota.

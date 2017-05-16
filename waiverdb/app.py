@@ -77,6 +77,7 @@ def create_app(config_obj=None):
     init_logging(app)
     # register blueprints
     app.register_blueprint(api_v1, url_prefix="/api/v1.0")
+    app.add_url_rule('/healthcheck', view_func=healthcheck)
     register_event_handlers(app)
     return app
 
@@ -85,6 +86,19 @@ def init_db(app):
     with app.app_context():
         db.create_all()
     return db
+
+
+def healthcheck():
+    """
+    Request handler for performing an application-level health check. This is
+    not part of the published API, it is intended for use by OpenShift or other
+    monitoring tools.
+
+    Returns a 200 response if the application is alive and able to serve requests.
+    """
+    result = db.session.execute('SELECT 1').scalar()
+    assert result == 1
+    return ('Health check OK', 200, [('Content-Type', 'text/plain')])
 
 
 def register_event_handlers(app):
