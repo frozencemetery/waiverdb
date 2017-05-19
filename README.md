@@ -19,7 +19,7 @@ Install the project:
 
 Run the server:
 
-    $ DEV=true python runapp.py
+    $ python run-dev-server.py
 
 The server is now running at <http://localhost:5004> and API calls can be sent to
 <http://localhost:5004/api/v1.0>. All data is stored inside `/var/tmp/waiverdb_db.sqlite`.

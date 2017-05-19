@@ -18,7 +18,7 @@ Install the project::
 
 Run the server::
 
-    $ DEV=true python runapp.py
+    $ python run-dev-server.py
 
 The server is now running at on `localhost port 5004`_. Consult the
 :ref:`rest-api` for available API calls. All data is stored inside

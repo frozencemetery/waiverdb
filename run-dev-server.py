@@ -1,6 +1,4 @@
 #!/usr/bin/python
-#
-# runapp.py - script to facilitate running the waiverdb app from the CLI
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +14,7 @@
 from waiverdb.app import create_app, init_db
 
 if __name__ == '__main__':
-    app = create_app()
+    app = create_app('waiverdb.config.DevelopmentConfig')
     init_db(app)
     app.run(
         host=app.config['HOST'],
