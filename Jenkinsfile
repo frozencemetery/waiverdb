@@ -116,6 +116,9 @@ node('rcm-tools-jslave-rhel-7-docker') {
                 def image = docker.build "factory2/waiverdb:${appversion}", "--build-arg waiverdb_rpm=$el7_rpm ."
                 image.push()
             }
+            /* Save container version for later steps (this is ugly but I can't find anything better...) */
+            writeFile file: 'appversion', text: appversion
+            archiveArtifacts artifacts: 'appversion'
         }
     } catch (e) {
         currentBuild.result = "FAILED"
@@ -124,5 +127,49 @@ node('rcm-tools-jslave-rhel-7-docker') {
             step([$class: 'Mailer', notifyEveryUnstableBuild: true, recipients: 'pnt-factory2-devel@redhat.com'])
         }
         throw e
+    }
+}
+node('fedora') {
+    sh 'sudo dnf -y install /usr/bin/py.test'
+    checkout scm
+    stage('Perform functional tests') {
+        unarchive mapping: ['appversion': 'appversion']
+        def appversion = readFile('appversion').trim()
+        openshift.withCluster('open.paas.redhat.com') {
+            openshift.doAs('openpaas-waiverdb-test-jenkins-credentials') {
+                openshift.withProject('waiverdb-test') {
+                    def template = readYaml file: 'openshift/waiverdb-test-template.yaml'
+                    def models = openshift.process(template,
+                            '-p', "TEST_ID=${env.BUILD_TAG}",
+                            '-p', "WAIVERDB_APP_VERSION=${appversion}")
+                    def environment_label = "test-${env.BUILD_TAG}"
+                    try {
+                        def objects = openshift.create(models)
+                        echo "Waiting for pods with label environment=${environment_label} to become Ready"
+                        def pods = openshift.selector('pods', ['environment': environment_label])
+                        timeout(15) {
+                            pods.untilEach(3) {
+                                def conds = it.object().status.conditions
+                                for (int i = 0; i < conds.size(); i++) {
+                                    if (conds[i].type == 'Ready' && conds[i].status == 'True') {
+                                        return true
+                                    }
+                                }
+                                return false
+                            }
+                        }
+                        def route_hostname = objects.narrow('route').object().spec.host
+                        echo "Running tests against https://${route_hostname}/"
+                        withEnv(["WAIVERDB_TEST_URL=https://${route_hostname}/"]) {
+                            sh 'py.test functional-tests/'
+                        }
+                    } finally {
+                        /* Tear down everything we just created */
+                        openshift.selector('dc,deploy,pod,configmap,secret,svc,route',
+                                ['environment': environment_label]).delete()
+                    }
+                }
+            }
+        }
     }
 }
