@@ -96,7 +96,7 @@ node('fedora') {
         throw e
     }
 }
-node('rcm-tools-jslave-rhel-7-docker') {
+node('docker') {
     try {
         checkout scm
         stage('Build Docker container') {
