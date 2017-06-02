@@ -125,6 +125,18 @@ def test_filtering_waivers_by_result_id(client, session):
     assert res_data['data'][0]['result_id'] == 123
 
 
+def test_filtering_waivers_by_multiple_result_ids(client, session):
+    create_waiver(session, result_id=123, username='foo-1', product_version='foo-1')
+    create_waiver(session, result_id=234, username='foo-2', product_version='foo-1')
+    create_waiver(session, result_id=345, username='foo-2', product_version='foo-1')
+    r = client.get('/api/v1.0/waivers/?result_id=123,345')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 200
+    assert len(res_data['data']) == 2
+    assert res_data['data'][0]['result_id'] == 345
+    assert res_data['data'][1]['result_id'] == 123
+
+
 def test_filtering_waivers_by_product_version(client, session):
     create_waiver(session, result_id=123, username='foo-1', product_version='release-1')
     create_waiver(session, result_id=124, username='foo-1', product_version='release-2')
