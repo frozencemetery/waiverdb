@@ -26,6 +26,27 @@ node('fedora') {
         sh 'make -C docs html'
         archiveArtifacts artifacts: 'docs/_build/html/**'
     }
+    /* Can't use GIT_BRANCH because of this issue https://issues.jenkins-ci.org/browse/JENKINS-35230 */
+    def git_branch = sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+    if (git_branch == 'master') {
+        stage('Publish Docs') {
+            sshagent (credentials: ['pagure-waiverdb-deploy-key']) {
+                sh """
+                mkdir -p ~/.ssh/
+                touch ~/.ssh/known_hosts
+                ssh-keygen -R pagure.io
+                echo 'pagure.io,140.211.169.204 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC198DWs0SQ3DX0ptu+8Wq6wnZMrXUCufN+wdSCtlyhHUeQ3q5B4Hgto1n2FMj752vToCfNTn9mWO7l2rNTrKeBsELpubl2jECHu4LqxkRVihu5UEzejfjiWNDN2jdXbYFY27GW9zymD7Gq3u+T/Mkp4lIcQKRoJaLobBmcVxrLPEEJMKI4AJY31jgxMTnxi7KcR+U5udQrZ3dzCn2BqUdiN5dMgckr4yNPjhl3emJeVJ/uhAJrEsgjzqxAb60smMO5/1By+yF85Wih4TnFtF4LwYYuxgqiNv72Xy4D/MGxCqkO/nH5eRNfcJ+AJFE7727F7Tnbo4xmAjilvRria/+l' >>~/.ssh/known_hosts
+                git clone ssh://git@pagure.io/docs/waiverdb.git docs-on-pagure
+                rm -r docs-on-pagure/*
+                cp -r docs/_build/html/* docs-on-pagure/
+                cd docs-on-pagure
+                git add -A .
+                git commit -m 'Automatic commit of docs built by Jenkins job ${env.JOB_NAME} #${env.BUILD_NUMBER}'
+                git push origin master
+                """
+            }
+        }
+    }
     stage('Build SRPM') {
         sh './rpmbuild.sh -bs'
         archiveArtifacts artifacts: 'rpmbuild-output/**'
