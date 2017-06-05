@@ -23,33 +23,31 @@ using the :func:`sqlalchemy.event.listen` function.
 """
 from __future__ import unicode_literals
 
-from gettext import gettext as _
 import logging
 
 from flask_restful import marshal
-# fedmsg is an optional dependency and may not be present
-try:
-    import fedmsg
-except ImportError:
-    fedmsg = None
-
+import fedmsg
+import stomp
+import json
 from waiverdb.fields import waiver_fields
 from waiverdb.models import Waiver
-
+from waiverdb.utils import stomp_connection
+from flask import current_app
 
 _log = logging.getLogger(__name__)
 
 
-def fedmsg_new_waiver(session):
+def publish_new_waiver(session):
     """
-    A post-commit event hook that emits fedmsgs.
+    A post-commit event hook that emits messages to a message bus. The messages
+    can be published by either fedmsg-hub with zmq or stomp.
 
     This event is designed to be registered with a session factory::
 
         >>> from sqlalchemy.event import listen
-        >>> listen(MyScopedSession, 'after_commit', fedmsg_new_waiver)
+        >>> listen(MyScopedSession, 'after_commit', publish_new_waiver)
 
-    The emitted fedmsg will look like::
+    The emitted message will look like::
 
         {
           "username": "jcline",
@@ -72,17 +70,21 @@ def fedmsg_new_waiver(session):
         session (sqlalchemy.orm.Session): The session that was committed to the
             database. This session is not active and cannot emit SQL.
 
-    Raises:
-        RuntimeError: If fedmsg is not installed.
     """
-    _log.debug('The fedmsg_new_waiver SQLAlchemy event has been activated.')
-    if fedmsg is None:
-        msg = _('The application has been configured to publish fedmsgs, but '
-                'fedmsg is not installed. Please install fedmsg or remove the '
-                'fedmsg SQLAlchemy event handler.')
-        raise RuntimeError(msg)
-
-    for row in session.identity_map.values():
-        if isinstance(row, Waiver):
-            _log.debug('Publishing fedmsg for %r', row)
-            fedmsg.publish(topic='waiver.new', msg=marshal(row, waiver_fields))
+    _log.debug('The publish_new_waiver SQLAlchemy event has been activated.')
+    if current_app.config['MESSAGE_PUBLISHER'] == 'stomp':
+        with stomp_connection() as conn:
+            stomp_configs = current_app.config.get('STOMP_CONFIGS')
+            for row in session.identity_map.values():
+                if isinstance(row, Waiver):
+                    _log.debug('Publishing a message for %r', row)
+                    msg =json.dumps(marshal(row, waiver_fields))
+                    kwargs = dict(body=msg, headers={}, destination=stomp_configs['destination'])
+                    if stomp.__version__[0] < 4:
+                        kwargs['message'] = kwargs.pop('body')  # On EL7, different sig.
+                    conn.send(**kwargs)
+    else:
+        for row in session.identity_map.values():
+            if isinstance(row, Waiver):
+                _log.debug('Publishing a message for %r', row)
+                fedmsg.publish(topic='waiver.new', msg=marshal(row, waiver_fields))

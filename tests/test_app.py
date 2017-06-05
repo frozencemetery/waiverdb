@@ -43,4 +43,4 @@ def test_disabled_messaging_should_not_register_events(mock_listen):
 def test_enabled_messaging_should_register_events(mock_listen):
     app.create_app(EnabledMessagedConfig)
     mock_listen.assert_called_once_with(
-        SignallingSession, 'after_commit', app.fedmsg_new_waiver)
+        SignallingSession, 'after_commit', app.publish_new_waiver)

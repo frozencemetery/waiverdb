@@ -7,3 +7,23 @@ JOURNAL_LOGGING = False
 #SHOW_DB_URI = False
 HOST= '0.0.0.0'
 PORT = 5004
+## Alternatively, you could use stomp to publish messages to a message bus.
+#MESSAGE_PUBLISHER = 'stomp'
+#STOMP_CONFIGS = {
+#    'destination': 'topic://VirtualTopic.eng.waiverdb.waiver.new',
+#    'connection': {
+#        'host_and_ports': [
+#            ('broker01', 61612),
+#            ('broker02', 61612),
+#        ],
+#        'use_ssl': True,
+#        'ssl_key_file': '/path/to/key/file',
+#        'ssl_cert_file': '/path/to/cert/file',
+#        'ssl_ca_certs': '/path/to/ca/certs',
+#    },
+#    # Alternatively, you can connect STOMP server with username and password.
+#    'credentials': {
+#        'username': 'username',
+#        'password': 'password',
+#    }
+#}

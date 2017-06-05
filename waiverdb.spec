@@ -26,6 +26,7 @@ BuildRequires:  python-mock
 BuildRequires:  pytest
 BuildRequires:  fedmsg
 BuildRequires:  python-flask-oidc
+BuildRequires:  stomppy
 %{?systemd_requires}
 BuildRequires:  systemd
 BuildArch:      noarch
@@ -42,6 +43,7 @@ Requires:       python2-systemd
 Requires:       python-mock
 Requires:       fedmsg
 Requires:       python-flask-oidc
+Requires:       stomppy
 
 %description
 WaiverDB is a companion service to ResultsDB, for recording waivers

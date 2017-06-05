@@ -15,7 +15,7 @@ import urlparse
 from flask import Flask
 from sqlalchemy import event
 
-from waiverdb.events import fedmsg_new_waiver
+from waiverdb.events import publish_new_waiver
 from waiverdb.logger import init_logging
 from waiverdb.api_v1 import api_v1
 from waiverdb.models import db
@@ -113,4 +113,4 @@ def register_event_handlers(app):
         # A workaround for https://github.com/mitsuhiko/flask-sqlalchemy/pull/364
         # can be removed after python-flask-sqlalchemy is upgraded to 2.2
         from flask_sqlalchemy import SignallingSession
-        event.listen(SignallingSession, 'after_commit', fedmsg_new_waiver)
+        event.listen(SignallingSession, 'after_commit', publish_new_waiver)

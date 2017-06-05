@@ -14,23 +14,12 @@
 # GNU General Public License for more details.
 """This module contains tests for :mod:`waiverdb.events`."""
 from __future__ import unicode_literals
-
-import pytest
-
 import mock
-
-from waiverdb import events
 from waiverdb.models import Waiver
 
 
-@mock.patch('waiverdb.events.fedmsg', None)
-def test_fedmsg_new_waiver_missing_fedmsg():
-    with pytest.raises(RuntimeError):
-        events.fedmsg_new_waiver(None)
-
-
 @mock.patch('waiverdb.events.fedmsg')
-def test_fedmsg_new_waiver(mock_fedmsg, session):
+def test_publish_new_waiver_with_fedmsg(mock_fedmsg, session):
     waiver = Waiver(
         result_id=1,
         username='jcline',

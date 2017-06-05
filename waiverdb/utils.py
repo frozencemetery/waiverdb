@@ -11,10 +11,12 @@
 
 import datetime
 import functools
-from flask import request, url_for, jsonify
+import stomp
+from flask import request, url_for, jsonify, current_app
 from flask_restful import marshal
 from waiverdb.fields import waiver_fields
 from werkzeug.exceptions import NotFound
+from contextlib import contextmanager
 
 
 def reqparse_since(since):
@@ -80,3 +82,26 @@ def jsonp(func):
         else:
             return func(*args, **kwargs)
     return wrapped
+
+
+@contextmanager
+def stomp_connection():
+    """
+    Helper function for stomp connection.
+    """
+    if current_app.config.get('STOMP_CONFIGS'):
+        configs = current_app.config.get('STOMP_CONFIGS')
+        if 'destination' not in configs or not configs['destination']:
+            raise RuntimeError('stomp was configured to publish messages, '
+                               'but destination is not configured in STOMP_CONFIGS')
+        if 'connection' not in configs or not configs['connection']:
+            raise RuntimeError('stomp was configured to publish messages,, '
+                               'but connection is not configured in STOMP_CONFIGS')
+        conn = stomp.Connection(**configs['connection'])
+        conn.start()
+        conn.connect(**configs.get('credentials', {}))
+        yield conn
+        conn.disconnect()
+    else:
+        raise RuntimeError('stomp was configured to publish messages, '
+                           'but STOMP_CONFIGS is not configured')
