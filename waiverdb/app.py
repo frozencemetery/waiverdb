@@ -109,7 +109,7 @@ def register_event_handlers(app):
         app (flask.Flask): The Flask object with the configured scoped session
             attached as the ``session`` attribute.
     """
-    if app.config['ZEROMQ_PUBLISH']:
+    if app.config['MESSAGE_BUS_PUBLISH']:
         # A workaround for https://github.com/mitsuhiko/flask-sqlalchemy/pull/364
         # can be removed after python-flask-sqlalchemy is upgraded to 2.2
         from flask_sqlalchemy import SignallingSession

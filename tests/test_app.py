@@ -21,24 +21,26 @@ from waiverdb import app, config
 from flask_sqlalchemy import SignallingSession
 
 
-class NoZmqConfig(config.Config):
-    ZEROMQ_PUBLISH = False
+class DisabledMessagingConfig(config.Config):
+    MESSAGE_BUS_PUBLISH = False
     AUTH_METHOD = None
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 
-class ZmqConfig(config.Config):
-    ZEROMQ_PUBLISH = True
+class EnabledMessagedConfig(config.Config):
+    MESSAGE_BUS_PUBLISH = True
     AUTH_METHOD = None
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 
 @mock.patch('waiverdb.app.event.listen')
-def test_register_events_no_zmq(mock_listen):
-    app.create_app(NoZmqConfig)
+def test_disabled_messaging_should_not_register_events(mock_listen):
+    app.create_app(DisabledMessagingConfig)
     assert 0 == mock_listen.call_count
 
 
 @mock.patch('waiverdb.app.event.listen')
-def test_register_events_zmq(mock_listen):
-    app.create_app(ZmqConfig)
+def test_enabled_messaging_should_register_events(mock_listen):
+    app.create_app(EnabledMessagedConfig)
     mock_listen.assert_called_once_with(
         SignallingSession, 'after_commit', app.fedmsg_new_waiver)

@@ -34,7 +34,8 @@ class Config(object):
     AUTH_METHOD = 'OIDC'  # Specify OIDC or Kerberos for authentication
     # Change it if the Kerberos service is not running on which the waiverdb is run.
     KERBEROS_HTTP_HOST = None
-    ZEROMQ_PUBLISH = True
+    # Set this to True or False to enable publishing to a message bus
+    MESSAGE_BUS_PUBLISH = True
 
 
 class ProductionConfig(Config):
