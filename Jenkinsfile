@@ -157,7 +157,7 @@ node('fedora') {
 } catch (e) {
     if (ownership.job.ownershipEnabled) {
         mail to: ownership.job.primaryOwnerEmail,
-             cc: ownership.job.secondaryOwnerEmails.join(';'),
+             cc: ownership.job.secondaryOwnerEmails.join(', '),
              subject: "Jenkins job ${env.JOB_NAME} #${env.BUILD_NUMBER} failed",
              body: "${env.BUILD_URL}\n\n${e}"
     }
