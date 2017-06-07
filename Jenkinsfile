@@ -31,7 +31,7 @@ node('fedora') {
     if (git_branch == 'master') {
         stage('Publish Docs') {
             sshagent (credentials: ['pagure-waiverdb-deploy-key']) {
-                sh """
+                sh '''
                 mkdir -p ~/.ssh/
                 touch ~/.ssh/known_hosts
                 ssh-keygen -R pagure.io
@@ -46,7 +46,7 @@ node('fedora') {
                 fi
                 git commit -m 'Automatic commit of docs built by Jenkins job ${env.JOB_NAME} #${env.BUILD_NUMBER}'
                 git push origin master
-                """
+                '''
             }
         }
     }
