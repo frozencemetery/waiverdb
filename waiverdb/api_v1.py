@@ -81,7 +81,8 @@ class WaiversResource(Resource):
 
         :query int page: The page to get.
         :query int limit: Limit the number of items returned.
-        :query int result_id: Filter the waivers by result ID.
+        :query int result_id: Filter the waivers by result ID. Accepts one or
+            more result IDs separated by commas.
         :query string product_version: Filter the waivers by product version.
         :query string username: Filter the waivers by username.
         :query string since: A ISO 8601 formatted datetime (e.g. 2017-03-16T13:40:05+00:00)
