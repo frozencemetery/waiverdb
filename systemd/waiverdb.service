@@ -4,6 +4,7 @@ Requires=waiverdb.socket
 After=network.target
 
 [Service]
+EnvironmentFile=-/etc/sysconfig/waiverdb
 ExecStart=/usr/bin/gunicorn --bind unix:/run/waiverdb/socket \
         waiverdb.wsgi:app
 
