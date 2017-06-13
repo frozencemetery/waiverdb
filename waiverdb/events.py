@@ -78,7 +78,7 @@ def publish_new_waiver(session):
             for row in session.identity_map.values():
                 if isinstance(row, Waiver):
                     _log.debug('Publishing a message for %r', row)
-                    msg =json.dumps(marshal(row, waiver_fields))
+                    msg = json.dumps(marshal(row, waiver_fields))
                     kwargs = dict(body=msg, headers={}, destination=stomp_configs['destination'])
                     if stomp.__version__[0] < 4:
                         kwargs['message'] = kwargs.pop('body')  # On EL7, different sig.
