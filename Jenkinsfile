@@ -148,7 +148,7 @@ node('fedora') {
                         }
                     } finally {
                         /* Tear down everything we just created */
-                        openshift.selector('dc,deploy,pod,configmap,secret,svc,route',
+                        openshift.selector('dc,deploy,configmap,secret,svc,route',
                                 ['environment': environment_label]).delete()
                     }
                 }
