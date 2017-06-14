@@ -121,6 +121,12 @@ def get_user(request):
         user = user.split("@")[0]
         if kerberos_token is not None:
             headers = {'WWW-Authenticate': ' '.join(['negotiate', kerberos_token])}
+    elif current_app.config['AUTH_METHOD'] == 'dummy':
+        # Blindly accept any username. For testing purposes only of course!
+        if not request.authorization:
+            response = Response('Unauthorized', 401, {'WWW-Authenticate': 'Basic realm="dummy"'})
+            raise Unauthorized(response=response)
+        user = request.authorization.username
     else:
         raise Unauthorized("Authenticated user required")
     return user, headers
