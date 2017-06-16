@@ -10,6 +10,7 @@ test results.
 
    developer-guide
    api
+   release-notes
 
 
 
