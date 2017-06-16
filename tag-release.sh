@@ -28,4 +28,4 @@ fi
 sed -i -e "/^__version__ = /c\\__version__ = '$version$prerelease'" waiverdb/__init__.py
 git add waiverdb.spec waiverdb/__init__.py
 git commit -m "Automatic commit of release $version$prerelease"
-git tag -a "waiverdb-$version$prerelease" -m "Tagging release $version$prerelease"
+git tag -s "waiverdb-$version$prerelease" -m "Tagging release $version$prerelease"
