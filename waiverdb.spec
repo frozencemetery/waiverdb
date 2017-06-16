@@ -11,6 +11,7 @@ Source0:        https://files.pythonhosted.org/packages/source/w/%{name}/%{name}
 
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
+BuildRequires:  python2-sphinx
 BuildRequires:  python-flask
 BuildRequires:  python-sqlalchemy
 BuildRequires:  python-flask-restful
@@ -54,6 +55,7 @@ against test results.
 
 %build
 %py2_build
+make -C docs html text
 
 %install
 %py2_install
@@ -69,7 +71,7 @@ py.test tests/
 
 %files
 %license COPYING
-%doc README.md conf docs
+%doc README.md conf docs/_build/html docs/_build/text
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}*.egg-info
 %{_unitdir}/%{name}.service
