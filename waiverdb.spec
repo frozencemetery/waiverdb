@@ -12,6 +12,7 @@ Source0:        https://files.pythonhosted.org/packages/source/w/%{name}/%{name}
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
 BuildRequires:  python2-sphinx
+BuildRequires:  python-sphinxcontrib-httpdomain
 BuildRequires:  python-flask
 BuildRequires:  python-sqlalchemy
 BuildRequires:  python-flask-restful
