@@ -25,7 +25,7 @@ if [ -n "$prerelease" ] ; then
 else
     sed -i -e "/^Release:/c\Release:        1%{?dist}" waiverdb.spec
 fi
-sed -i -e "/^version = /c\version = '$version$prerelease'" setup.py
-git add setup.py waiverdb.spec
+sed -i -e "/^__version__ = /c\\__version__ = '$version$prerelease'" waiverdb/__init__.py
+git add waiverdb.spec waiverdb/__init__.py
 git commit -m "Automatic commit of release $version$prerelease"
 git tag -a "waiverdb-$version$prerelease" -m "Tagging release $version$prerelease"

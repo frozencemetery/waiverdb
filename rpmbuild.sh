@@ -55,8 +55,8 @@ if [ -n "$rpmrel" ] ; then
         "$workdir/${name}.spec"
     # also hack the Python module version
     sed --regexp-extended --in-place \
-        -e "/^version = /c\\version = '$version'" \
-        "$workdir/setup.py"
+        -e "/^__version__ = /c\\__version__ = '$version'" \
+        "$workdir/waiverdb/__init__.py"
 fi
 ( cd "$workdir" && python setup.py sdist )
 mv "$workdir"/dist/*.tar.gz "$workdir"
