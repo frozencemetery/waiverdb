@@ -122,7 +122,7 @@ node('fedora') {
                         def objects = openshift.create(models)
                         echo "Waiting for pods with label environment=${environment_label} to become Ready"
                         def pods = openshift.selector('pods', ['environment': environment_label])
-                        timeout(15) {
+                        timeout(30) {
                             pods.untilEach(3) {
                                 def conds = it.object().status.conditions
                                 for (int i = 0; i < conds.size(); i++) {
