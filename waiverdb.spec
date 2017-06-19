@@ -20,10 +20,10 @@ BuildRequires:  python-sqlalchemy
 BuildRequires:  python-flask-restful
 BuildRequires:  python-flask-sqlalchemy
 BuildRequires:  python-kerberos
-%if 0%{?rhel} <= 7
-BuildRequires:  systemd-python
-%else
+%if 0%{?fedora} || 0%{?rhel} > 7
 BuildRequires:  python2-systemd
+%else
+BuildRequires:  systemd-python
 %endif
 BuildRequires:  pytest
 BuildRequires:  python-mock
@@ -39,10 +39,10 @@ Requires:       python-sqlalchemy
 Requires:       python-flask-restful
 Requires:       python-flask-sqlalchemy
 Requires:       python-kerberos
-%if 0%{?rhel} <= 7
-Requires:       systemd-python
-%else
+%if 0%{?fedora} || 0%{?rhel} > 7
 Requires:       python2-systemd
+%else
+Requires:       systemd-python
 %endif
 Requires:       python-mock
 Requires:       fedmsg
