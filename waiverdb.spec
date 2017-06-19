@@ -11,8 +11,10 @@ Source0:        https://files.pythonhosted.org/packages/source/w/%{name}/%{name}
 
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
+%if 0%{?fedora}
 BuildRequires:  python2-sphinx
 BuildRequires:  python-sphinxcontrib-httpdomain
+%endif
 BuildRequires:  python-flask
 BuildRequires:  python-sqlalchemy
 BuildRequires:  python-flask-restful
@@ -56,7 +58,9 @@ against test results.
 
 %build
 %py2_build
+%if 0%{?fedora}
 make -C docs html text
+%endif
 
 %install
 %py2_install
@@ -72,7 +76,10 @@ py.test tests/
 
 %files
 %license COPYING
-%doc README.md conf docs/_build/html docs/_build/text
+%doc README.md conf
+%if 0%{?fedora}
+%doc docs/_build/html docs/_build/text
+%endif
 %{python2_sitelib}/%{name}
 %{python2_sitelib}/%{name}*.egg-info
 %{_unitdir}/%{name}.service
