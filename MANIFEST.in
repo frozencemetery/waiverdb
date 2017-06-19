@@ -9,4 +9,4 @@ include run-dev-server.py
 include fedmsg.d/*.py
 recursive-include systemd *
 recursive-include conf *
-recursive-include docs *.py *.rst Makefile
+recursive-include docs *.py *.rst *.inv Makefile
