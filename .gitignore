@@ -5,11 +5,8 @@
 conf/settings.py
 *.sqlite
 *.egg*
-/env*/
-test_env
 .cache
 docs/_build
 /rpmbuild-output/
 *.src.rpm
-review-waiverdb
 .tox
