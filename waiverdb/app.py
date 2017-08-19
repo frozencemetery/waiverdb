@@ -88,7 +88,8 @@ def healthcheck():
     Returns a 200 response if the application is alive and able to serve requests.
     """
     result = db.session.execute('SELECT 1').scalar()
-    assert result == 1
+    if result != 1:
+        raise RuntimeError('Unable to communicate with database.')
     return ('Health check OK', 200, [('Content-Type', 'text/plain')])
 
 
