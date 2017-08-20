@@ -182,6 +182,7 @@ def test_jsonp(client, session):
     assert r.mimetype == 'application/javascript'
     assert 'jsonpcallback' in r.get_data(as_text=True)
 
+
 def test_healthcheck(client):
     r = client.get('healthcheck')
     assert r.status_code == 200
