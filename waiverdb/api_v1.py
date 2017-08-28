@@ -126,8 +126,8 @@ class WaiversResource(Resource):
            Content-Length: 91
 
            {
-               "result_id": "1",
-               "waived": "false",
+               "result_id": 1,
+               "waived": false,
                "product_version": "Parrot",
                "comment": "It's dead!"
            }
@@ -148,10 +148,10 @@ class WaiversResource(Resource):
                "comment": "It's dead!",
                "id": 15,
                "product_version": "Parrot",
-               "result_id": "1",
+               "result_id": 1,
                "timestamp": "2017-03-16T17:42:04.209638",
-               "username": "http://jcline.id.fedoraproject.org/",
-               "waived": "false"
+               "username": "jcline",
+               "waived": false
            }
 
         :json int result_id: The result ID for the waiver.
