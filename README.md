@@ -6,16 +6,9 @@ against test results.
 
 ## Quick development setup
 
-Set up a python virtualenv:
+Install dependencies:
 
-    $ sudo dnf install python-virtualenv
-    $ virtualenv env_waiverdb
-    $ source env_waiverdb/bin/activate
-    $ pip install -r requirements.txt
-
-Install the project:
-
-    $ python setup.py develop
+    $ sudo dnf builddep waiverdb.spec
 
 Run the server:
 
