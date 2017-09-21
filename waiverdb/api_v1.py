@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 from flask import Blueprint, request
-from flask_restful import Resource, Api, reqparse, marshal_with
-from werkzeug.exceptions import BadRequest, NotFound
+from flask_restful import Resource, Api, reqparse, marshal_with, marshal
+from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType
 from sqlalchemy.sql.expression import func
 
 from waiverdb.models import db, Waiver
@@ -75,7 +75,7 @@ class WaiversResource(Resource):
             more result IDs separated by commas.
         :query string product_version: Filter the waivers by product version.
         :query string username: Filter the waivers by username.
-        :query string since: A ISO 8601 formatted datetime (e.g. 2017-03-16T13:40:05+00:00)
+        :query string since: An ISO 8601 formatted datetime (e.g. 2017-03-16T13:40:05+00:00)
             to filter results by. Optionally provide a second ISO 8601 datetime separated
             by a comma to retrieve a range (e.g. 2017-03-16T13:40:05+00:00,
             2017-03-16T13:40:15+00:00)
@@ -187,6 +187,102 @@ class WaiverResource(Resource):
             raise NotFound('Waiver not found')
 
 
+class GetWaiversByResultIDs(Resource):
+    @jsonp
+    def post(self):
+        """
+        Return a list of waivers by filtering the waivers with a list of result ids.
+        This accepts POST requests in order to handle a special case where a
+        GET /waivers/ request has a long query string with many result ids that
+        could cause 413 erros.
+
+        **Sample request**:
+
+        .. sourcecode:: http
+
+           POST /api/v1.0/waivers/+by-result-ids HTTP/1.1
+           Host: localhost:5004
+           Accept-Encoding: gzip, deflate
+           Accept: application/json
+           Connection: keep-alive
+           User-Agent: HTTPie/0.9.4
+           Content-Type: application/json
+           Content-Length: 40
+
+           {
+               "result_ids": [1,2]
+           }
+
+        **Sample response**:
+
+        .. sourcecode:: http
+
+            HTTP/1.0 200 OK
+            Content-Length: 562
+            Content-Type: application/json
+            Date: Thu, 21 Sep 2017 04:58:37 GMT
+            Server: Werkzeug/0.11.10 Python/2.7.13
+
+            {
+                "data": [
+                    {
+                        "comment": "It's dead!",
+                        "id": 5,
+                        "product_version": "Parrot",
+                        "result_id": 2,
+                        "timestamp": "2017-09-21T04:55:53.343368",
+                        "username": "dummy",
+                        "waived": true
+                    },
+                    {
+                        "comment": "It's dead!",
+                        "id": 4,
+                        "product_version": "Parrot",
+                        "result_id": 1,
+                        "timestamp": "2017-09-21T04:55:51.936658",
+                        "username": "dummy",
+                        "waived": true
+                    }
+                ]
+            }
+
+        :jsonparam array result_ids: Filter the waivers by a list of result IDs.
+        :jsonparam string product_version: Filter the waivers by product version.
+        :jsonparam string username: Filter the waivers by username.
+        :jsonparam string since: An ISO 8601 formatted datetime (e.g. 2017-03-16T13:40:05+00:00)
+            to filter results by. Optionally provide a second ISO 8601 datetime separated
+            by a comma to retrieve a range (e.g. 2017-03-16T13:40:05+00:00,
+            2017-03-16T13:40:15+00:00)
+        :jsonparam boolean include_obsolete: If true, obsolete waivers will be included.
+        :statuscode 200: If the query was valid and no problems were encountered.
+            Note that the response may still contain 0 waivers.
+        """
+        if not request.get_json():
+            raise UnsupportedMediaType('No JSON payload in request')
+        data = request.get_json()
+        query = Waiver.query.order_by(Waiver.timestamp.desc())
+        if 'result_ids' in data and data['result_ids']:
+            query = query.filter(Waiver.result_id.in_(data['result_ids']))
+        if 'product_version' in data:
+            query = query.filter(Waiver.product_version == data['product_version'])
+        if 'username' in data:
+            query = query.filter(Waiver.username == data['username'])
+        if 'since' in data:
+            try:
+                since_start, since_end = reqparse_since(data['since'])
+            except:
+                raise BadRequest("'since' parameter not in ISO8601 format")
+            if since_start:
+                query = query.filter(Waiver.timestamp >= since_start)
+            if since_end:
+                query = query.filter(Waiver.timestamp <= since_end)
+        if not data.get('include_obsolete', False):
+            subquery = db.session.query(func.max(Waiver.id)).group_by(Waiver.result_id)
+            query = query.filter(Waiver.id.in_(subquery))
+        return {'data': marshal(query.all(), waiver_fields)}
+
+
 # set up the Api resource routing here
 api.add_resource(WaiversResource, '/waivers/')
 api.add_resource(WaiverResource, '/waivers/<int:waiver_id>')
+api.add_resource(GetWaiversByResultIDs, '/waivers/+by-result-ids')

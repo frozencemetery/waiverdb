@@ -187,3 +187,25 @@ def test_healthcheck(client):
     r = client.get('healthcheck')
     assert r.status_code == 200
     assert r.get_data(as_text=True) == 'Health check OK'
+
+
+def test_get_waivers_with_post_request(client, session):
+    """
+    This tests that users can get waivers by sending a POST request with a long
+    list of result ids.
+    """
+    result_ids = []
+    for i in range(1, 51):
+        result_ids.append(str(i))
+        create_waiver(session, result_id=i, username='foo', product_version='foo-1')
+    data = {
+        'result_ids': result_ids
+    }
+    r = client.post('/api/v1.0/waivers/+by-result-ids', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 200
+    assert len(res_data['data']) == 50
+    assert set([w['result_id'] for w in res_data['data']]) == set(range(1, 51))
+    assert all(w['username'] == 'foo' for w in res_data['data'])
+    assert all(w['product_version'] == 'foo-1' for w in res_data['data'])
