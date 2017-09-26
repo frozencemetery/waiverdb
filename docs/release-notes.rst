@@ -2,6 +2,30 @@
 Release Notes
 =============
 
+WaiverDB 0.3
+============
+
+Released 26 Sep 2017.
+
+A number of issues have been resolved in this release:
+
+* `Issue 73`_: Fixed some type errors in the API docs examples.
+
+* `Issue 74`_: Updated README to recommand installing package dependencies using dnf builddep.
+
+* `Issue 75`_: Fixed the health check API to return a proper error if the application is not
+  able to serve requests.
+
+.. _Issue 73: https://pagure.io/waiverdb/issue/73
+.. _Issue 74: https://pagure.io/waiverdb/issue/74
+.. _Issue 75: https://pagure.io/waiverdb/issue/75
+
+Other updates
+-------------
+
+* Supports a new HTTP API :http:post:`/api/v1.0/waivers/+by-result-ids`.
+* Package dependencies are switched to python2-* packages in Fedora.
+
 WaiverDB 0.2
 ============
 
