@@ -11,7 +11,7 @@ A number of issues have been resolved in this release:
 
 * `Issue 73`_: Fixed some type errors in the API docs examples.
 
-* `Issue 74`_: Updated README to recommand installing package dependencies using dnf builddep.
+* `Issue 74`_: Updated README to recommend installing package dependencies using dnf builddep.
 
 * `Issue 75`_: Fixed the health check API to return a proper error if the application is not
   able to serve requests.
