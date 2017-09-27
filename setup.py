@@ -8,6 +8,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md')) as fd:
     README = fd.read()
 
+
 def get_project_version(version_file='waiverdb/__init__.py'):
     """
     Read the declared version of the project from the source code.
