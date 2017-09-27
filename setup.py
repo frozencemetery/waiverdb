@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+import os
 import re
 from setuptools import setup
 
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'README.md')) as fd:
+    README = fd.read()
 
 def get_project_version(version_file='waiverdb/__init__.py'):
     """
@@ -25,6 +29,7 @@ def get_project_version(version_file='waiverdb/__init__.py'):
 setup(name='waiverdb',
       version=get_project_version(),
       description='An engine for storing waivers against test results.',
+      long_description=README,
       author='Red Hat, Inc.',
       author_email='qa-devel@lists.fedoraproject.org',
       license='GPLv2+',
