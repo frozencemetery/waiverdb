@@ -9,16 +9,12 @@ Released 26 Sep 2017.
 
 A number of issues have been resolved in this release:
 
-* `Issue 73`_: Fixed some type errors in the API docs examples.
+* Fixed some type errors in the API docs examples (#73).
 
-* `Issue 74`_: Updated README to recommend installing package dependencies using dnf builddep.
+* Updated README to recommend installing package dependencies using dnf builddep (#74).
 
-* `Issue 75`_: Fixed the health check API to return a proper error if the application is not
-  able to serve requests.
-
-.. _Issue 73: https://pagure.io/waiverdb/issue/73
-.. _Issue 74: https://pagure.io/waiverdb/issue/74
-.. _Issue 75: https://pagure.io/waiverdb/issue/75
+* Fixed the health check API to return a proper error if the application is not
+  able to serve requests (#75).
 
 Other updates
 -------------
