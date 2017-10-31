@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0+
 
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from flask_restful import Resource, Api, reqparse, marshal_with, marshal
 from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType
 from sqlalchemy.sql.expression import func
 
+from waiverdb import __version__
 from waiverdb.models import db, Waiver
 from waiverdb.utils import reqparse_since, json_collection, jsonp
 from waiverdb.fields import waiver_fields
@@ -282,7 +283,35 @@ class GetWaiversByResultIDs(Resource):
         return {'data': marshal(query.all(), waiver_fields)}
 
 
+class AboutResource(Resource):
+    @jsonp
+    def get(self):
+        """
+        Returns the current running version and the method used for authentication.
+
+        **Sample response**:
+
+        .. sourcecode:: none
+
+          HTTP/1.0 200 OK
+          Content-Length: 55
+          Content-Type: application/json
+          Date: Tue, 31 Oct 2017 04:29:19 GMT
+          Server: Werkzeug/0.11.10 Python/2.7.13
+
+          {
+            "auth_method": "OIDC",
+            "version": "0.3.1"
+          }
+
+        :statuscode 200: Currently running waiverdb software version and authentication
+                         are returned.
+        """
+        return {'version': __version__, 'auth_method': current_app.config['AUTH_METHOD']}
+
+
 # set up the Api resource routing here
 api.add_resource(WaiversResource, '/waivers/')
 api.add_resource(WaiverResource, '/waivers/<int:waiver_id>')
 api.add_resource(GetWaiversByResultIDs, '/waivers/+by-result-ids')
+api.add_resource(AboutResource, '/about')

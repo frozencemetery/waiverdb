@@ -4,6 +4,7 @@ import json
 from .utils import create_waiver
 import datetime
 from mock import patch
+from waiverdb import __version__
 
 
 @patch('waiverdb.auth.get_user', return_value=('foo', {}))
@@ -209,3 +210,11 @@ def test_get_waivers_with_post_request(client, session):
     assert set([w['result_id'] for w in res_data['data']]) == set(range(1, 51))
     assert all(w['username'] == 'foo' for w in res_data['data'])
     assert all(w['product_version'] == 'foo-1' for w in res_data['data'])
+
+
+def test_about_endpoint(client):
+    r = client.get('/api/v1.0/about')
+    output = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 200
+    assert output['version'] == __version__
+    assert output['auth_method'] == client.application.config['AUTH_METHOD']
