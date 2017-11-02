@@ -1,7 +1,7 @@
 # WaiverDB
 
-WaiverDB is a companion service to 
-[ResultsDB](https://pagure.io/taskotron/resultsdb), for recording waivers 
+WaiverDB is a companion service to
+[ResultsDB](https://pagure.io/taskotron/resultsdb), for recording waivers
 against test results.
 
 ## Quick development setup
@@ -48,3 +48,27 @@ You can view fedmsgs published when new waivers get created by doing::
 
     $ fedmsg-relay --config-filename fedmsg.d/config.py &
     $ fedmsg-tail --config fedmsg.d/config.py --no-validate --really-pretty
+
+### WaiverDB CLI
+WaiverDB has a command-line client interface for creating new waivers against test
+results. A sample configuration is installed as ``/usr/share/doc/waiverdb/client.conf.example``.
+Copy it to ``/etc/waiverdb/client.conf`` and edit it there. Or you can use ``--config-file``
+to specify one.
+```
+Usage: waiverdb-cli [OPTIONS]
+
+  Creates new waivers against test results.
+
+  Examples:
+
+      waiverdb-cli -r 123 -r 456 -p "fedora-26" -c "It's dead!"
+
+Options:
+  -C, --config-file PATH      Specify a config file to use
+  -r, --result-id INTEGER     Specify one or more results to be waived
+  -p, --product-version TEXT  Specify one of PDC's product version
+                              identifiers.
+  --waived / --no-waived      Whether or not the result is waived
+  -c, --comment TEXT          A comment explaining why the result is waived
+  -h, --help                  Show this message and exit.
+```

@@ -36,4 +36,7 @@ setup(name='waiverdb',
       license='GPLv2+',
       packages=['waiverdb', 'waiverdb.models'],
       package_dir={'waiverdb': 'waiverdb'},
+      entry_points={
+          'console_scripts': ['waiverdb-cli=waiverdb.cli:cli'],
+      },
 )

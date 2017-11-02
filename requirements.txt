@@ -1,5 +1,5 @@
 # This is a list of pypi packages to be installed into virtualenv. Alternatively,
-# you can install these as RPMs instead of pypi packages. 
+# you can install these as RPMs instead of pypi packages.
 
 fedmsg[consumers,commands]
 m2crypto
@@ -19,3 +19,9 @@ stomp.py
 # Documentation requirements
 sphinx
 sphinxcontrib-httpdomain
+
+# CLI
+click
+configparser
+openidc-client
+requests-kerberos

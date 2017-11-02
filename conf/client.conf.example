@@ -1,0 +1,10 @@
+[waiverdb]
+# Specify OIDC or Kerberos for authentication
+auth_method=OIDC
+api_url=https://waiverdb-web-waiverdb.app.os.stg.fedoraproject.org/api/v1.0
+oidc_id_provider=https://id.stg.fedoraproject.org/openidc/
+oidc_client_id=waiverdb-authorizer
+oidc_client_secret=notsecret
+oidc_scopes=
+    openid
+    https://waiverdb.fedoraproject.org/oidc/create-waiver
