@@ -6,7 +6,7 @@ import stomp
 from flask import request, url_for, jsonify, current_app
 from flask_restful import marshal
 from waiverdb.fields import waiver_fields
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, HTTPException
 from contextlib import contextmanager
 
 
@@ -57,6 +57,27 @@ def json_collection(query, page=1, limit=10):
     return pages
 
 
+def json_error(error):
+    """
+    Return error responses in JSON.
+
+    :param error: One of Exceptions. It could be HTTPException, ConnectionError, or
+    Timeout.
+    :return: JSON error response.
+
+    """
+    if isinstance(error, HTTPException):
+        response = jsonify(message=error.description)
+        response.status_code = error.code
+    else:
+        # Could be ConnectionError or Timeout
+        current_app.logger.exception('Returning 500 to user.')
+        response = jsonify(message=str(error.message))
+        response.status_code = 500
+
+    return insert_headers(response)
+
+
 def jsonp(func):
     """Wraps Jsonified output for JSONP requests."""
     @functools.wraps(func)
@@ -96,3 +117,15 @@ def stomp_connection():
     else:
         raise RuntimeError('stomp was configured to publish messages, '
                            'but STOMP_CONFIGS is not configured')
+
+
+def insert_headers(response):
+    """ Insert the CORS headers for the give reponse if there are any
+    configured for the application.
+    """
+    if current_app.config.get('CORS_URL'):
+        response.headers['Access-Control-Allow-Origin'] = \
+            current_app.config['CORS_URL']
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Method'] = 'POST, OPTIONS'
+    return response

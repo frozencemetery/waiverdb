@@ -10,7 +10,10 @@ from waiverdb.events import publish_new_waiver
 from waiverdb.logger import init_logging
 from waiverdb.api_v1 import api_v1
 from waiverdb.models import db
+from waiverdb.utils import json_error
 from flask_oidc import OpenIDConnect
+from werkzeug.exceptions import default_exceptions
+from requests import ConnectionError, Timeout
 
 
 def load_config(app):
@@ -59,6 +62,14 @@ def create_app(config_obj=None):
         load_config(app)
     if app.config['PRODUCTION'] and app.secret_key == 'replace-me-with-something-random':
         raise Warning("You need to change the app.secret_key value for production")
+   
+    
+    # register error handlers
+    for code in default_exceptions.iterkeys():
+        app.register_error_handler(code, json_error)
+    app.register_error_handler(ConnectionError, json_error)
+    app.register_error_handler(Timeout, json_error)
+    
     populate_db_config(app)
     if app.config['AUTH_METHOD'] == 'OIDC':
         app.oidc = OpenIDConnect(app)
