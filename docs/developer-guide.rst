@@ -9,7 +9,7 @@ Set up a python virtualenv::
 
     $ sudo dnf install python-virtualenv
     $ virtualenv env_waiverdb
-    $ source env_resultsdb/bin/activate
+    $ source env_waiverdb/bin/activate
     $ pip install -r requirements.txt
 
 Install the project::
@@ -29,7 +29,7 @@ Adjusting configuration
 =======================
 
 You can configure this app by copying ``conf/settings.py.example`` into
-``conf/setting.py`` and adjusting values as you see fit. It overrides default
+``conf/settings.py`` and adjusting values as you see fit. It overrides default
 values in ``waiverdb/config.py``.
 
 

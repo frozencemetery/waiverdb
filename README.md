@@ -22,7 +22,7 @@ You can verify the server is running correctly by visiting <http://localhost:500
 ## Adjusting configuration
 
 You can configure this app by copying `conf/settings.py.example` into
-`conf/setting.py` and adjusting values as you see fit. It overrides default
+`conf/settings.py` and adjusting values as you see fit. It overrides default
 values in `waiverdb/config.py`.
 
 ## Running test suite
