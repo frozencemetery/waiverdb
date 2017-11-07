@@ -16,6 +16,8 @@ Run the server:
 
 The server is now running at <http://localhost:5004> and API calls can be sent to
 <http://localhost:5004/api/v1.0>. All data is stored inside `/var/tmp/waiverdb_db.sqlite`.
+You can verify the server is running correctly by visiting <http://localhost:5004/api/v1.0/about>.
+
 
 ## Adjusting configuration
 
