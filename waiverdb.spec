@@ -81,12 +81,41 @@ Requires:       stomppy
 %endif
 Requires:       fedmsg
 
+Requires:       waiverdb-common = %{version}-%{release}
+
 %description
 WaiverDB is a companion service to ResultsDB, for recording waivers
 against test results.
 
+%package common
+Summary: Common resources for WaiverDB subpackages.
+
+%description common
+This package is not useful on its own.  It contains common filesystem resources
+for other WaiverDB subpackages.
+
+%package cli
+Summary: A CLI tool for interacting with waiverdb
+%if 0%{?fedora} || 0%{?rhel} > 7
+BuildRequires:  python2-click
+Requires:       python2-click
+%else
+BuildRequires:  python-click
+Requires:       python-click
+%endif
+
+Requires:       waiverdb-common = %{version}-%{release}
+
+%description cli
+This package contains a CLI tool for interacting with waiverdb.
+
+Primarily, submitting new waiverdbs.
+
 %prep
 %setup -q -n %{name}-%{upstream_version}
+
+# Replace any staging urls with prod ones
+sed -i 's/\.stg\.fedoraproject\.org/.fedoraproject.org/g' conf/client.conf.example
 
 %build
 %py2_build
@@ -102,21 +131,34 @@ install -m0644 \
     systemd/%{name}.socket \
     %{buildroot}%{_unitdir}
 
+install -d %{buildroot}%{_sysconfdir}/waiverdb/
+install -m0644 \
+    conf/client.conf.example \
+    %{buildroot}%{_sysconfdir}/waiverdb/client.conf
+
 %check
 export PYTHONPATH=%{buildroot}/%{python2_sitelib}
 py.test tests/
 
 %files
+%{python2_sitelib}/%{name}
+%{_unitdir}/%{name}.service
+%{_unitdir}/%{name}.socket
+
+%files common
 %license COPYING
 %doc README.md conf
 %if 0%{?fedora}
 %doc docs/_build/html docs/_build/text
 %endif
-%{python2_sitelib}/%{name}
+%{python2_sitelib}/%{name}/__init__.py*
 %{python2_sitelib}/%{name}*.egg-info
+
+%files cli
+%license COPYING
+%{python2_sitelib}/%{name}/cli.py*
 %attr(755,root,root) %{_bindir}/waiverdb-cli
-%{_unitdir}/%{name}.service
-%{_unitdir}/%{name}.socket
+%config(noreplace) %{_sysconfdir}/waiverdb/client.conf
 
 %post
 %systemd_post %{name}.service
