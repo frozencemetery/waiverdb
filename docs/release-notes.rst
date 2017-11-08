@@ -2,6 +2,21 @@
 Release Notes
 =============
 
+WaiverDB 0.4
+============
+
+Released 08 Nov 2017.
+
+A number of issues have been resolved in this release:
+
+* New WaiverDB CLI for creating waivers. (#82).
+
+* New `/about` API endpoint to expose the current running version and the method
+  used for authentication of the server.
+
+* Improved the process of building docs by using sphinxcontrib.issuetracker
+  extension.
+
 WaiverDB 0.3
 ============
 
