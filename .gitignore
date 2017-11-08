@@ -10,3 +10,5 @@ docs/_build
 /rpmbuild-output/
 *.src.rpm
 .tox
+dist
+.ropeproject
