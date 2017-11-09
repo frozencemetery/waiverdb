@@ -47,8 +47,8 @@ node('fedora') {
         sh './rpmbuild.sh -bs'
         archiveArtifacts artifacts: 'rpmbuild-output/**'
     }
-    /* We take a flock on the mock configs, to avoid multiple unrelated jobs on 
-     * the same Jenkins slave trying to use the same mock root at the same 
+    /* We take a flock on the mock configs, to avoid multiple unrelated jobs on
+     * the same Jenkins slave trying to use the same mock root at the same
      * time, which will error out. */
     stage('Build RPM') {
         parallel (
@@ -97,6 +97,8 @@ node('docker') {
     stage('Build Docker container') {
         unarchive mapping: ['mock-result/f26/': '.']
         def f26_rpm = findFiles(glob: 'mock-result/f26/**/*.noarch.rpm')[0]
+        /* XXX: remove this once we divorce waiverdb-cli from waiverdb. */
+        def waiverdb_common = findFiles(glob: 'mock-result/f26/**/waiverdb-common-*.noarch.rpm')[0]
         def appversion = sh(returnStdout: true, script: """
             rpm2cpio ${f26_rpm} | \
             cpio --quiet --extract --to-stdout ./usr/lib/python2.7/site-packages/waiverdb\\*.egg-info/PKG-INFO | \
@@ -112,7 +114,7 @@ node('docker') {
             /* Note that the docker.build step has some magic to guess the
              * Dockerfile used, which will break if the build directory (here ".")
              * is not the final argument in the string. */
-            def image = docker.build "factory2/waiverdb:${appversion}", "--build-arg waiverdb_rpm=$f26_rpm ."
+            def image = docker.build "factory2/waiverdb:${appversion}", "--build-arg waiverdb_rpm=$f26_rpm --build-arg waiverdb_common_rpm=$waiverdb_common ."
             image.push()
         }
         /* Save container version for later steps (this is ugly but I can't find anything better...) */
