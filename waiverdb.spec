@@ -142,6 +142,7 @@ py.test tests/
 
 %files
 %{python2_sitelib}/%{name}
+%{python2_sitelib}/%{name}*.egg-info
 %{_unitdir}/%{name}.service
 %{_unitdir}/%{name}.socket
 
