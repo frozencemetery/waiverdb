@@ -62,14 +62,14 @@ def create_app(config_obj=None):
         load_config(app)
     if app.config['PRODUCTION'] and app.secret_key == 'replace-me-with-something-random':
         raise Warning("You need to change the app.secret_key value for production")
-   
-    
+
+
     # register error handlers
     for code in default_exceptions.iterkeys():
         app.register_error_handler(code, json_error)
     app.register_error_handler(ConnectionError, json_error)
     app.register_error_handler(Timeout, json_error)
-    
+
     populate_db_config(app)
     if app.config['AUTH_METHOD'] == 'OIDC':
         app.oidc = OpenIDConnect(app)
