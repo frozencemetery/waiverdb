@@ -3,6 +3,7 @@
 import json
 from .utils import create_waiver
 import datetime
+from requests import ConnectionError
 from mock import patch
 from waiverdb import __version__
 
@@ -55,6 +56,19 @@ def test_get_waiver(client, session):
 def test_404_for_nonexistent_waiver(client, session):
     r = client.get('/api/v1.0/waivers/foo')
     assert r.status_code == 404
+    res_data = json.loads(r.get_data(as_text=True))
+    message = (
+        'The requested URL was not found on the server.  If you entered the '
+        'URL manually please check your spelling and try again.')
+    assert res_data['message'] == message
+
+
+@patch('waiverdb.api_v1.AboutResource.get', side_effect=ConnectionError)
+def test_500(mocked, client, session):
+    r = client.get('/api/v1.0/about')
+    assert r.status_code == 500
+    res_data = json.loads(r.get_data(as_text=True))
+    assert res_data['message'] == ''
 
 
 def test_get_waivers(client, session):
