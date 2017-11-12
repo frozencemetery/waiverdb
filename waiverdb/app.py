@@ -63,7 +63,6 @@ def create_app(config_obj=None):
     if app.config['PRODUCTION'] and app.secret_key == 'replace-me-with-something-random':
         raise Warning("You need to change the app.secret_key value for production")
 
-
     # register error handlers
     for code in default_exceptions.iterkeys():
         app.register_error_handler(code, json_error)
