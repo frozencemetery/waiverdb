@@ -2,7 +2,7 @@
 
 from flask import Blueprint, request, current_app
 from flask_restful import Resource, Api, reqparse, marshal_with, marshal
-from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType
+from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType, Forbidden
 from sqlalchemy.sql.expression import func
 
 from waiverdb import __version__
@@ -23,6 +23,7 @@ RP['create_waiver'].add_argument('result_id', type=int, required=True, location=
 RP['create_waiver'].add_argument('waived', type=bool, required=True, location='json')
 RP['create_waiver'].add_argument('product_version', type=str, required=True, location='json')
 RP['create_waiver'].add_argument('comment', type=str, default=None, location='json')
+RP['create_waiver'].add_argument('proxy_user', type=str, default=None, location='json')
 
 RP['get_waivers'] = reqparse.RequestParser()
 RP['get_waivers'].add_argument('result_id', location='args')
@@ -34,6 +35,7 @@ RP['get_waivers'].add_argument('include_obsolete', type=bool, default=False, loc
 RP['get_waivers'].add_argument('since', location='args')
 RP['get_waivers'].add_argument('page', default=1, type=int, location='args')
 RP['get_waivers'].add_argument('limit', default=10, type=int, location='args')
+RP['get_waivers'].add_argument('proxied_by', location='args')
 
 
 class WaiversResource(Resource):
@@ -76,6 +78,8 @@ class WaiversResource(Resource):
             more result IDs separated by commas.
         :query string product_version: Filter the waivers by product version.
         :query string username: Filter the waivers by username.
+        :query string proxied_by: Filter the waivers by the users who are
+            allowed to create waivers on behalf of other users.
         :query string since: An ISO 8601 formatted datetime (e.g. 2017-03-16T13:40:05+00:00)
             to filter results by. Optionally provide a second ISO 8601 datetime separated
             by a comma to retrieve a range (e.g. 2017-03-16T13:40:05+00:00,
@@ -93,6 +97,8 @@ class WaiversResource(Resource):
             query = query.filter(Waiver.product_version == args['product_version'])
         if args['username']:
             query = query.filter(Waiver.username == args['username'])
+        if args['proxied_by']:
+            query = query.filter(Waiver.proxied_by == args['proxied_by'])
         if args['since']:
             try:
                 since_start, since_end = reqparse_since(args['since'])
@@ -152,19 +158,27 @@ class WaiversResource(Resource):
                "result_id": 1,
                "timestamp": "2017-03-16T17:42:04.209638",
                "username": "jcline",
-               "waived": false
+               "waived": false,
+               "proxied_by": null
            }
 
         :json int result_id: The result ID for the waiver.
         :json boolean waived: Whether or not the result is waived.
         :json string product_version: The product version string.
         :json string comment: A comment explaining the waiver.
+        :json string proxy_user: Username on whose behalf the caller is proxying.
         :statuscode 201: The waiver was successfully created.
         """
         user, headers = waiverdb.auth.get_user(request)
         args = RP['create_waiver'].parse_args()
+        proxied_by = None
+        if args.get('proxy_user'):
+            if user not in current_app.config['SUPERUSERS']:
+                raise Forbidden('user %s does not have the proxyuser ability' % user)
+            proxied_by = user
+            user = args['proxy_user']
         waiver = Waiver(args['result_id'], user, args['product_version'], args['waived'],
-                        args['comment'])
+                        args['comment'], proxied_by)
         db.session.add(waiver)
         db.session.commit()
         return waiver, 201, headers
@@ -233,7 +247,8 @@ class GetWaiversByResultIDs(Resource):
                         "result_id": 2,
                         "timestamp": "2017-09-21T04:55:53.343368",
                         "username": "dummy",
-                        "waived": true
+                        "waived": true,
+                        "proxied_by": null
                     },
                     {
                         "comment": "It's dead!",
@@ -242,7 +257,8 @@ class GetWaiversByResultIDs(Resource):
                         "result_id": 1,
                         "timestamp": "2017-09-21T04:55:51.936658",
                         "username": "dummy",
-                        "waived": true
+                        "waived": true,
+                        "proxied_by": null
                     }
                 ]
             }
@@ -250,6 +266,8 @@ class GetWaiversByResultIDs(Resource):
         :jsonparam array result_ids: Filter the waivers by a list of result IDs.
         :jsonparam string product_version: Filter the waivers by product version.
         :jsonparam string username: Filter the waivers by username.
+        :jsonparam string proxied_by: Filter the waivers by the users who are
+            allowed to create waivers on behalf of other users.
         :jsonparam string since: An ISO 8601 formatted datetime (e.g. 2017-03-16T13:40:05+00:00)
             to filter results by. Optionally provide a second ISO 8601 datetime separated
             by a comma to retrieve a range (e.g. 2017-03-16T13:40:05+00:00,
@@ -268,6 +286,8 @@ class GetWaiversByResultIDs(Resource):
             query = query.filter(Waiver.product_version == data['product_version'])
         if 'username' in data:
             query = query.filter(Waiver.username == data['username'])
+        if 'proxied_by' in data:
+            query = query.filter(Waiver.proxied_by == data['proxied_by'])
         if 'since' in data:
             try:
                 since_start, since_end = reqparse_since(data['since'])

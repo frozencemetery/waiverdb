@@ -6,6 +6,7 @@ waiver_fields = {
     'id': fields.Integer,
     'result_id': fields.Integer,
     'username': fields.String,
+    'proxied_by': fields.String,
     'product_version': fields.String,
     'waived': fields.Boolean,
     'comment': fields.String,

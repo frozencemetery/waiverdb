@@ -30,6 +30,8 @@ class Config(object):
     # Specify fedmsg or stomp for publishing messages
     MESSAGE_PUBLISHER = 'fedmsg'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
+    # A list of users are allowed to create waivers on behalf of other users.
+    SUPERUSERS = []
 
 
 class ProductionConfig(Config):
@@ -61,3 +63,4 @@ class TestingConfig(Config):
     )
     OIDC_REQUIRED_SCOPE = 'waiverdb_scope'
     OIDC_RESOURCE_SERVER_ONLY = True
+    SUPERUSERS = ['bodhi']
