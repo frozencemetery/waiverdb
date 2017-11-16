@@ -49,6 +49,7 @@ def publish_new_waiver(session):
             "timestamp": "2017-03-16T17:42:04.209638",
             "product_version": "Satellite 6.3",
             "result_id": 1,
+            "proxied_by": null,
             "id": 15
           }
         }

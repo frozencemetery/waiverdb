@@ -8,17 +8,20 @@ class Waiver(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     result_id = db.Column(db.Integer, nullable=False)
     username = db.Column(db.String(255), nullable=False)
+    proxied_by = db.Column(db.String(255))
     product_version = db.Column(db.String(200), nullable=False)
     waived = db.Column(db.Boolean, nullable=False, default=False)
     comment = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, result_id, username, product_version, waived=False, comment=None):
+    def __init__(self, result_id, username, product_version, waived=False, comment=None,
+                 proxied_by=None):
         self.result_id = result_id
         self.username = username
         self.product_version = product_version
         self.waived = waived
         self.comment = comment
+        self.proxied_by = proxied_by
 
     def __repr__(self):
         return '%s(result_id=%r, username=%r, product_version=%r, waived=%r)' % \

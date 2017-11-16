@@ -9,7 +9,7 @@ from waiverdb import __version__
 
 
 @patch('waiverdb.auth.get_user', return_value=('foo', {}))
-def test_create_waiver(mocked_get_user, client, session, monkeypatch):
+def test_create_waiver(mocked_get_user, client, session):
     data = {
         'result_id': 123,
         'product_version': 'fool-1',
@@ -37,6 +37,40 @@ def test_create_waiver_with_malformed_data(mocked_get_user, client):
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 400
     assert 'invalid literal for int()' in res_data['message']['result_id']
+
+
+@patch('waiverdb.auth.get_user', return_value=('foo', {}))
+def test_non_superuser_cannot_create_waiver_for_other_users(mocked_get_user, client):
+    data = {
+        'result_id': 123,
+        'product_version': 'fool-1',
+        'waived': True,
+        'comment': 'it broke',
+        'proxy_user': 'bar',
+    }
+    r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 403
+    assert 'user foo does not have the proxyuser ability' == res_data['message']
+
+
+@patch('waiverdb.auth.get_user', return_value=('bodhi', {}))
+def test_superuser_can_create_waiver_for_other_users(mocked_get_user, client, session):
+    data = {
+        'result_id': 123,
+        'product_version': 'fool-1',
+        'waived': True,
+        'comment': 'it broke',
+        'proxy_user': 'bar',
+    }
+    r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 201
+    # a waiver should be created for bar by bodhi
+    assert res_data['username'] == 'bar'
+    assert res_data['proxied_by'] == 'bodhi'
 
 
 def test_get_waiver(client, session):
@@ -189,6 +223,17 @@ def test_filtering_waivers_by_since(client, session):
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert len(res_data['data']) == 0
+
+
+def test_filtering_waivers_by_proxied_by(client, session):
+    create_waiver(session, result_id=123, username='foo-1', product_version='foo-1',
+                  proxied_by='bodhi')
+    create_waiver(session, result_id=234, username='foo-2', product_version='foo-1')
+    r = client.get('/api/v1.0/waivers/?proxied_by=bodhi')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 200
+    assert len(res_data['data']) == 1
+    assert res_data['data'][0]['result_id'] == 123
 
 
 def test_jsonp(client, session):
