@@ -15,6 +15,7 @@ systemd
 pytest >= 2.4.2
 mock
 stomp.py
+Flask-Migrate
 
 # Documentation requirements
 sphinx

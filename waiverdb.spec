@@ -30,6 +30,7 @@ BuildRequires:  python2-mock
 BuildRequires:  python2-flask-oidc
 BuildRequires:  python2-configparser
 BuildRequires:  python2-click
+BuildRequires:  python2-flask-migrate
 BuildRequires:  stomppy
 %else # EPEL7 uses python- naming
 BuildRequires:  python-setuptools
@@ -44,6 +45,7 @@ BuildRequires:  python-mock
 BuildRequires:  python-flask-oidc
 BuildRequires:  python-click
 BuildRequires:  python-configparser
+BuildRequires:  python-flask-migrate
 BuildRequires:  stomppy
 %endif
 BuildRequires:  fedmsg
@@ -65,6 +67,7 @@ Requires:       python2-mock
 Requires:       python2-flask-oidc
 Requires:       python2-click
 Requires:       python2-configparser
+Requires:       python2-flask-migrate
 Requires:       stomppy
 %else
 Requires:       python-flask
@@ -77,6 +80,7 @@ Requires:       python-mock
 Requires:       python-flask-oidc
 Requires:       python-click
 Requires:       python-configparser
+Requires:       python-flask-migrate
 Requires:       stomppy
 %endif
 Requires:       fedmsg
@@ -145,6 +149,7 @@ py.test tests/
 %{python2_sitelib}/%{name}*.egg-info
 %{_unitdir}/%{name}.service
 %{_unitdir}/%{name}.socket
+%attr(755,root,root) %{_bindir}/waiverdb
 
 %files common
 %license COPYING

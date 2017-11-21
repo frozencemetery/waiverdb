@@ -29,6 +29,7 @@ class Config(object):
     MESSAGE_BUS_PUBLISH = True
     # Specify fedmsg or stomp for publishing messages
     MESSAGE_PUBLISHER = 'fedmsg'
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 
 class ProductionConfig(Config):
