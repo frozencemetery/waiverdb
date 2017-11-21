@@ -5,10 +5,10 @@ include requirements.txt
 include pytest.ini
 include tests/*.py tests/client_secrets.json
 include tox.ini
-include run-dev-server.py
 include fedmsg.d/*.py
 recursive-include systemd *
 recursive-include conf *
 exclude conf/settings.py
 exclude conf/client.conf
 recursive-include docs *.py *.rst *.inv Makefile
+recursive-include waiverdb/migrations *.ini *mako README

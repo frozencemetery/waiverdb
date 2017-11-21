@@ -1,6 +1,6 @@
 
-# Template to produce a new test environment in OpenShift. Uses OpenID Connect 
-# against iddev.fedorainfracloud.org for authentication, and ephemeral storage 
+# Template to produce a new test environment in OpenShift. Uses OpenID Connect
+# against iddev.fedorainfracloud.org for authentication, and ephemeral storage
 # for Postgres data.
 #
 # To create an environment from the template, process and apply it:
@@ -180,6 +180,10 @@ objects:
           image: "docker-registry.engineering.redhat.com/factory2/waiverdb:${WAIVERDB_APP_VERSION}"
           ports:
           - containerPort: 8080
+          lifecycle:
+            postStart:
+              exec:
+                command: [ /bin/sh, -i, -c, "waiverdb db upgrade" ]
           volumeMounts:
           - name: config-volume
             mountPath: /etc/waiverdb
@@ -210,8 +214,8 @@ objects:
             httpGet:
               path: /healthcheck
               port: 8080
-          # Limit to 384MB memory. This is probably *not* enough but it is 
-          # necessary in the current environment to allow for 2 replicas and 
+          # Limit to 384MB memory. This is probably *not* enough but it is
+          # necessary in the current environment to allow for 2 replicas and
           # rolling updates, without hitting the (very aggressive) memory quota.
           resources:
             limits:

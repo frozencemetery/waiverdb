@@ -10,9 +10,14 @@ Install dependencies:
 
     $ sudo dnf builddep waiverdb.spec
 
-Run the server:
+Run the server::
 
-    $ python run-dev-server.py
+    $ cp conf/settings.py.example conf/settings.py
+    $ DEV=true python waiverdb/manage.py run -h localhost -p 5004 --debugger
+
+Migrate the db::
+
+    $ DEV=true python waiverdb/manage.py db upgrade
 
 The server is now running at <http://localhost:5004> and API calls can be sent to
 <http://localhost:5004/api/v1.0>. All data is stored inside `/var/tmp/waiverdb_db.sqlite`.

@@ -2,7 +2,7 @@
 
 import os
 import re
-from setuptools import setup
+from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md')) as fd:
@@ -34,9 +34,10 @@ setup(name='waiverdb',
       author='Red Hat, Inc.',
       author_email='qa-devel@lists.fedoraproject.org',
       license='GPLv2+',
-      packages=['waiverdb', 'waiverdb.models'],
-      package_dir={'waiverdb': 'waiverdb'},
+      packages=find_packages(exclude=['tests']),
+      include_package_data=True,
       entry_points={
-          'console_scripts': ['waiverdb-cli=waiverdb.cli:cli'],
+          'console_scripts': ['waiverdb-cli=waiverdb.cli:cli',
+                              'waiverdb=waiverdb.manage:cli'],
       },
 )

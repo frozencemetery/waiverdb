@@ -4,6 +4,7 @@ import os
 import urlparse
 
 from flask import Flask
+from flask_migrate import Migrate
 from sqlalchemy import event
 
 from waiverdb.events import publish_new_waiver
@@ -74,6 +75,10 @@ def create_app(config_obj=None):
         app.oidc = OpenIDConnect(app)
     # initialize db
     db.init_app(app)
+    # initialize db migrations
+    migrations_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                                  'migrations')
+    Migrate(app, db, directory=migrations_dir)
     # initialize logging
     init_logging(app)
     # register blueprints
