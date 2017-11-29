@@ -53,3 +53,8 @@ def client(app):
 @pytest.fixture()
 def enable_kerberos(app, monkeypatch):
     monkeypatch.setitem(app.config, 'AUTH_METHOD', 'Kerberos')
+
+
+@pytest.fixture()
+def enable_ssl(app, monkeypatch):
+    monkeypatch.setitem(app.config, 'AUTH_METHOD', 'SSL')
