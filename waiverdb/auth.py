@@ -112,6 +112,15 @@ def get_user(request):
         user = user.split("@")[0]
         if kerberos_token is not None:
             headers = {'WWW-Authenticate': ' '.join(['negotiate', kerberos_token])}
+    elif current_app.config['AUTH_METHOD'] == 'SSL':
+        # Nginx sets SSL_CLIENT_VERIFY and SSL_CLIENT_S_DN in request.environ
+        # when doing SSL authentication.
+        ssl_client_verify = request.environ.get('SSL_CLIENT_VERIFY')
+        if ssl_client_verify != 'SUCCESS':
+            raise Unauthorized('Cannot verify client: %s' % ssl_client_verify)
+        if not request.environ.get('SSL_CLIENT_S_DN'):
+            raise Unauthorized('Unable to get user information (DN) from the client certificate')
+        user = request.environ.get('SSL_CLIENT_S_DN')
     elif current_app.config['AUTH_METHOD'] == 'dummy':
         # Blindly accept any username. For testing purposes only of course!
         if not request.authorization:

@@ -90,3 +90,30 @@ class TestOIDCAuthentication(object):
         request.headers.__contains__.side_effect = headers.__contains__
         user, header = waiverdb.auth.get_user(request)
         assert user == name
+
+
+@pytest.mark.usefixtures('enable_ssl')
+class TestSSLAuthentication(object):
+    def test_SSL_CLIENT_VERIFY_is_not_set_should_raise_error(self):
+        with pytest.raises(Unauthorized) as excinfo:
+            request = mock.MagicMock()
+            waiverdb.auth.get_user(request)
+        assert 'Cannot verify client' in excinfo.value.get_description()
+
+    def test_SSL_CLIENT_S_DN_is_not_set_should_raise_error(self):
+        with pytest.raises(Unauthorized) as excinfo:
+            request = mock.MagicMock(environ={'SSL_CLIENT_VERIFY': 'SUCCESS'})
+            waiverdb.auth.get_user(request)
+        assert 'Unable to get user information (DN) from the client certificate' \
+               in excinfo.value.get_description()
+
+    def test_good_ssl_cert(self):
+        # http://vsbattles.wikia.com/wiki/Son_Goku
+        name = 'Son Goku'
+        ssl = {
+            'SSL_CLIENT_VERIFY': 'SUCCESS',
+            'SSL_CLIENT_S_DN': name
+        }
+        request = mock.MagicMock(environ=ssl)
+        user, header = waiverdb.auth.get_user(request)
+        assert user == name
