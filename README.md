@@ -13,11 +13,11 @@ Install dependencies:
 Run the server::
 
     $ cp conf/settings.py.example conf/settings.py
-    $ PYTHONPATH=./waiverdb DEV=true python waiverdb/manage.py run -h localhost -p 5004 --debugger
+    $ PYTHONPATH=~/waiverdb DEV=true python waiverdb/manage.py run -h localhost -p 5004 --debugger
 
 Migrate the db::
 
-    $ PYTHONPATH=./waiverdb DEV=true python waiverdb/manage.py db upgrade
+    $ PYTHONPATH=~/waiverdb DEV=true python waiverdb/manage.py db upgrade
 
 The server is now running at <http://localhost:5004> and API calls can be sent to
 <http://localhost:5004/api/v1.0>. All data is stored inside `/var/tmp/waiverdb_db.sqlite`.
