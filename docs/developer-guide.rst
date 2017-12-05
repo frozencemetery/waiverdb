@@ -23,11 +23,11 @@ Install the project::
 Run the server::
 
     $ cp conf/settings.py.example conf/settings.py
-    $ DEV=true python waiverdb/manage.py run -h localhost -p 5004 --debugger
+    $ PYTHONPATH DEV=true python waiverdb/manage.py run -h localhost -p 5004 --debugger
 
 Migrate the db::
 
-    $ DEV=true python waiverdb/manage.py db upgrade
+    $ PYTHONPATH DEV=true python waiverdb/manage.py db upgrade
 
 The server is now running at on `localhost port 5004`_. Consult the
 :ref:`rest-api` for available API calls. All data is stored inside
