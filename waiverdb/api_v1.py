@@ -23,7 +23,7 @@ RP['create_waiver'].add_argument('result_id', type=int, required=True, location=
 RP['create_waiver'].add_argument('waived', type=bool, required=True, location='json')
 RP['create_waiver'].add_argument('product_version', type=str, required=True, location='json')
 RP['create_waiver'].add_argument('comment', type=str, default=None, location='json')
-RP['create_waiver'].add_argument('proxy_user', type=str, default=None, location='json')
+RP['create_waiver'].add_argument('username', type=str, default=None, location='json')
 
 RP['get_waivers'] = reqparse.RequestParser()
 RP['get_waivers'].add_argument('result_id', location='args')
@@ -166,17 +166,17 @@ class WaiversResource(Resource):
         :json boolean waived: Whether or not the result is waived.
         :json string product_version: The product version string.
         :json string comment: A comment explaining the waiver.
-        :json string proxy_user: Username on whose behalf the caller is proxying.
+        :json string username: Username on whose behalf the caller is proxying.
         :statuscode 201: The waiver was successfully created.
         """
         user, headers = waiverdb.auth.get_user(request)
         args = RP['create_waiver'].parse_args()
         proxied_by = None
-        if args.get('proxy_user'):
+        if args.get('username'):
             if user not in current_app.config['SUPERUSERS']:
                 raise Forbidden('user %s does not have the proxyuser ability' % user)
             proxied_by = user
-            user = args['proxy_user']
+            user = args['username']
         waiver = Waiver(args['result_id'], user, args['product_version'], args['waived'],
                         args['comment'], proxied_by)
         db.session.add(waiver)

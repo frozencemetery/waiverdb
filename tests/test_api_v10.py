@@ -46,7 +46,7 @@ def test_non_superuser_cannot_create_waiver_for_other_users(mocked_get_user, cli
         'product_version': 'fool-1',
         'waived': True,
         'comment': 'it broke',
-        'proxy_user': 'bar',
+        'username': 'bar',
     }
     r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
                     content_type='application/json')
@@ -62,7 +62,7 @@ def test_superuser_can_create_waiver_for_other_users(mocked_get_user, client, se
         'product_version': 'fool-1',
         'waived': True,
         'comment': 'it broke',
-        'proxy_user': 'bar',
+        'username': 'bar',
     }
     r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
                     content_type='application/json')
