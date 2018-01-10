@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+import json
+
 from flask import Blueprint, request, current_app
 from flask_restful import Resource, Api, reqparse, marshal_with, marshal
-from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType, Forbidden
+from werkzeug.exceptions import BadRequest, UnsupportedMediaType, Forbidden
 from sqlalchemy.sql.expression import func
 
 from waiverdb import __version__
@@ -14,19 +16,27 @@ import waiverdb.auth
 api_v1 = (Blueprint('api_v1', __name__))
 api = Api(api_v1)
 
+
+def valid_dict(value):
+    if not isinstance(value, dict):
+        raise ValueError("Must be a valid dict, not %r" % value)
+    return value
+
+
 # RP contains request parsers (reqparse.RequestParser).
 #    Parsers are added in each 'resource section' for better readability
 RP = {}
 
 RP['create_waiver'] = reqparse.RequestParser()
-RP['create_waiver'].add_argument('result_id', type=int, required=True, location='json')
+RP['create_waiver'].add_argument('subject', type=valid_dict, required=True, location='json')
+RP['create_waiver'].add_argument('testcase', type=str, required=True, location='json')
 RP['create_waiver'].add_argument('waived', type=bool, required=True, location='json')
 RP['create_waiver'].add_argument('product_version', type=str, required=True, location='json')
 RP['create_waiver'].add_argument('comment', type=str, default=None, location='json')
 RP['create_waiver'].add_argument('username', type=str, default=None, location='json')
 
 RP['get_waivers'] = reqparse.RequestParser()
-RP['get_waivers'].add_argument('result_id', location='args')
+RP['get_waivers'].add_argument('results', location='args')
 RP['get_waivers'].add_argument('product_version', location='args')
 RP['get_waivers'].add_argument('username', location='args')
 RP['get_waivers'].add_argument('include_obsolete', type=bool, default=False, location='args')
@@ -74,8 +84,8 @@ class WaiversResource(Resource):
 
         :query int page: The page to get.
         :query int limit: Limit the number of items returned.
-        :query int result_id: Filter the waivers by result ID. Accepts one or
-            more result IDs separated by commas.
+        :query string results: Filter the waivers by result. Accepts a list of
+            dictionaries, with one key 'subject' and one key 'testcase'.
         :query string product_version: Filter the waivers by product version.
         :query string username: Filter the waivers by username.
         :query string proxied_by: Filter the waivers by the users who are
@@ -91,8 +101,19 @@ class WaiversResource(Resource):
         """
         args = RP['get_waivers'].parse_args()
         query = Waiver.query.order_by(Waiver.timestamp.desc())
-        if args['result_id']:
-            query = query.filter(Waiver.result_id.in_(args['result_id'].split(',')))
+
+        if args['results']:
+            results = json.loads(args['results'])
+            for d in results:
+                if d.get('subject', None):
+                    if not isinstance(d.get('subject', None), dict):
+                        raise BadRequest("'results' parameter should be a list \
+                                          of dictionaries with subject and testcase")
+                if d.get('testcase', None):
+                    if not isinstance(d.get('testcase', None), basestring):
+                        raise BadRequest("'results' parameter should be a list \
+                                      of dictionaries with subject and testcase")
+            query = Waiver.by_results(query, results)
         if args['product_version']:
             query = query.filter(Waiver.product_version == args['product_version'])
         if args['username']:
@@ -102,15 +123,19 @@ class WaiversResource(Resource):
         if args['since']:
             try:
                 since_start, since_end = reqparse_since(args['since'])
-            except:
+            except ValueError:
+                raise BadRequest("'since' parameter not in ISO8601 format")
+            except TypeError:
                 raise BadRequest("'since' parameter not in ISO8601 format")
             if since_start:
                 query = query.filter(Waiver.timestamp >= since_start)
             if since_end:
                 query = query.filter(Waiver.timestamp <= since_end)
         if not args['include_obsolete']:
-            subquery = db.session.query(func.max(Waiver.id)).group_by(Waiver.result_id)
+            subquery = db.session.query(func.max(Waiver.id)).group_by(Waiver.subject,
+                                                                      Waiver.testcase)
             query = query.filter(Waiver.id.in_(subquery))
+        query = query.order_by(Waiver.timestamp.desc())
         return json_collection(query, args['page'], args['limit'])
 
     @jsonp
@@ -133,7 +158,8 @@ class WaiversResource(Resource):
            Content-Length: 91
 
            {
-               "result_id": 1,
+               "subject": {"productmd.compose.id": "Fedora-9000-19700101.n.18"},
+               "testcase": "compose.install_no_user",
                "waived": false,
                "product_version": "Parrot",
                "comment": "It's dead!"
@@ -155,20 +181,23 @@ class WaiversResource(Resource):
                "comment": "It's dead!",
                "id": 15,
                "product_version": "Parrot",
-               "result_id": 1,
+               "subject": {"productmd.compose.id": "Fedora-9000-19700101.n.18"},
+               "testcase": "compose.install_no_user",
                "timestamp": "2017-03-16T17:42:04.209638",
                "username": "jcline",
                "waived": false,
                "proxied_by": null
            }
 
-        :json int result_id: The result ID for the waiver.
+        :json object subject: The result subject for the waiver.
+        :json string testcase: The result testcase for the waiver.
         :json boolean waived: Whether or not the result is waived.
         :json string product_version: The product version string.
         :json string comment: A comment explaining the waiver.
         :json string username: Username on whose behalf the caller is proxying.
         :statuscode 201: The waiver was successfully created.
         """
+
         user, headers = waiverdb.auth.get_user(request)
         args = RP['create_waiver'].parse_args()
         proxied_by = None
@@ -177,8 +206,8 @@ class WaiversResource(Resource):
                 raise Forbidden('user %s does not have the proxyuser ability' % user)
             proxied_by = user
             user = args['username']
-        waiver = Waiver(args['result_id'], user, args['product_version'], args['waived'],
-                        args['comment'], proxied_by)
+        waiver = Waiver(args['subject'], args['testcase'], user,
+                        args['product_version'], args['waived'], args['comment'], proxied_by)
         db.session.add(waiver)
         db.session.commit()
         return waiver, 201, headers
@@ -198,24 +227,25 @@ class WaiverResource(Resource):
         """
         try:
             return Waiver.query.get_or_404(waiver_id)
-        except:
+        except Exception as NotFound:
             raise NotFound('Waiver not found')
 
 
-class GetWaiversByResultIDs(Resource):
+class GetWaiversBySubjectsAndTestcases(Resource):
     @jsonp
     def post(self):
         """
-        Return a list of waivers by filtering the waivers with a list of result ids.
-        This accepts POST requests in order to handle a special case where a
-        GET /waivers/ request has a long query string with many result ids that
-        could cause 413 erros.
+        Return a list of waivers by filtering the waivers with a
+        list of result subjects and testcases.
+        This accepts POST requests in order to handle a special
+        case where a GET /waivers/ request has a long query string with many
+        result subjects/testcases that could cause 413 errors.
 
         **Sample request**:
 
         .. sourcecode:: http
 
-           POST /api/v1.0/waivers/+by-result-ids HTTP/1.1
+           POST /api/v1.0/waivers/+by-subjects-and-testcases HTTP/1.1
            Host: localhost:5004
            Accept-Encoding: gzip, deflate
            Accept: application/json
@@ -225,7 +255,16 @@ class GetWaiversByResultIDs(Resource):
            Content-Length: 40
 
            {
-               "result_ids": [1,2]
+                "results": [
+                    {
+                        "subject": {"productmd.compose.id": "Fedora-9000-19700101.n.18"},
+                        "testcase": "compose.install_no_user"
+                    },
+                    {
+                        "subject": {"item": "gzip-1.9-1.fc28", "type": "koji_build"},
+                        "testcase": "dist.rpmlint"
+                    }
+                ]
            }
 
         **Sample response**:
@@ -244,7 +283,8 @@ class GetWaiversByResultIDs(Resource):
                         "comment": "It's dead!",
                         "id": 5,
                         "product_version": "Parrot",
-                        "result_id": 2,
+                        "subject": {"productmd.compose.id": "Fedora-9000-19700101.n.18"},
+                        "testcase": "compose.install_no_user",
                         "timestamp": "2017-09-21T04:55:53.343368",
                         "username": "dummy",
                         "waived": true,
@@ -254,7 +294,8 @@ class GetWaiversByResultIDs(Resource):
                         "comment": "It's dead!",
                         "id": 4,
                         "product_version": "Parrot",
-                        "result_id": 1,
+                        "subject": {"item": "gzip-1.9-1.fc28", "type": "koji_build"},
+                        "testcase": "dist.rpmlint",
                         "timestamp": "2017-09-21T04:55:51.936658",
                         "username": "dummy",
                         "waived": true,
@@ -263,7 +304,8 @@ class GetWaiversByResultIDs(Resource):
                 ]
             }
 
-        :jsonparam array result_ids: Filter the waivers by a list of result IDs.
+        :jsonparam array results: Filter the waivers by a list of dictionaries
+            with result subjects and testcase.
         :jsonparam string product_version: Filter the waivers by product version.
         :jsonparam string username: Filter the waivers by username.
         :jsonparam string proxied_by: Filter the waivers by the users who are
@@ -280,8 +322,17 @@ class GetWaiversByResultIDs(Resource):
             raise UnsupportedMediaType('No JSON payload in request')
         data = request.get_json()
         query = Waiver.query.order_by(Waiver.timestamp.desc())
-        if 'result_ids' in data and data['result_ids']:
-            query = query.filter(Waiver.result_id.in_(data['result_ids']))
+        if data.get('results'):
+            for d in data['results']:
+                if d.get('subject', None):
+                    if not isinstance(d.get('subject', None), dict):
+                        raise BadRequest("'results' parameter should be a list \
+                                          of dictionaries with subject and testcase")
+                if d.get('testcase', None):
+                    if not isinstance(d.get('testcase', None), basestring):
+                        raise BadRequest("'results' parameter should be a list \
+                                          of dictionaries with subject and testcase")
+            query = Waiver.by_results(query, data['results'])
         if 'product_version' in data:
             query = query.filter(Waiver.product_version == data['product_version'])
         if 'username' in data:
@@ -291,15 +342,20 @@ class GetWaiversByResultIDs(Resource):
         if 'since' in data:
             try:
                 since_start, since_end = reqparse_since(data['since'])
-            except:
+            except ValueError:
+                raise BadRequest("'since' parameter not in ISO8601 format")
+            except TypeError:
                 raise BadRequest("'since' parameter not in ISO8601 format")
             if since_start:
                 query = query.filter(Waiver.timestamp >= since_start)
             if since_end:
                 query = query.filter(Waiver.timestamp <= since_end)
         if not data.get('include_obsolete', False):
-            subquery = db.session.query(func.max(Waiver.id)).group_by(Waiver.result_id)
+            subquery = db.session.query(func.max(Waiver.id)).group_by(Waiver.subject,
+                                                                      Waiver.testcase)
             query = query.filter(Waiver.id.in_(subquery))
+
+        query = query.order_by(Waiver.timestamp.desc())
         return {'data': marshal(query.all(), waiver_fields)}
 
 
@@ -333,5 +389,5 @@ class AboutResource(Resource):
 # set up the Api resource routing here
 api.add_resource(WaiversResource, '/waivers/')
 api.add_resource(WaiverResource, '/waivers/<int:waiver_id>')
-api.add_resource(GetWaiversByResultIDs, '/waivers/+by-result-ids')
+api.add_resource(GetWaiversBySubjectsAndTestcases, '/waivers/+by-subjects-and-testcases')
 api.add_resource(AboutResource, '/about')

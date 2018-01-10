@@ -11,7 +11,8 @@ from waiverdb import __version__
 @patch('waiverdb.auth.get_user', return_value=('foo', {}))
 def test_create_waiver(mocked_get_user, client, session):
     data = {
-        'result_id': 123,
+        'subject': {'subject.test': 'subject'},
+        'testcase': 'testcase1',
         'product_version': 'fool-1',
         'waived': True,
         'comment': 'it broke',
@@ -21,28 +22,43 @@ def test_create_waiver(mocked_get_user, client, session):
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 201
     assert res_data['username'] == 'foo'
-    assert res_data['result_id'] == 123
+    assert res_data['subject'] == {'subject.test': 'subject'}
+    assert res_data['testcase'] == 'testcase1'
     assert res_data['product_version'] == 'fool-1'
     assert res_data['waived'] is True
     assert res_data['comment'] == 'it broke'
 
 
 @patch('waiverdb.auth.get_user', return_value=('foo', {}))
-def test_create_waiver_with_malformed_data(mocked_get_user, client):
+def test_create_waiver_with_no_testcase(mocked_get_user, client):
     data = {
-        'result_id': 'wrong id',
+        'subject': {'foo': 'bar'},
     }
     r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
                     content_type='application/json')
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 400
-    assert 'invalid literal for int()' in res_data['message']['result_id']
+    assert 'Missing required parameter in the JSON body' in res_data['message']['testcase']
+
+
+@patch('waiverdb.auth.get_user', return_value=('foo', {}))
+def test_create_waiver_with_malformed_subject(mocked_get_user, client):
+    data = {
+        'subject': 'asd',
+        'testcase': 'qqq',
+    }
+    r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 400
+    assert 'Must be a valid dict' in res_data['message']['subject']
 
 
 @patch('waiverdb.auth.get_user', return_value=('foo', {}))
 def test_non_superuser_cannot_create_waiver_for_other_users(mocked_get_user, client):
     data = {
-        'result_id': 123,
+        'subject': {'subject.test': 'subject'},
+        'testcase': 'testcase1',
         'product_version': 'fool-1',
         'waived': True,
         'comment': 'it broke',
@@ -58,7 +74,8 @@ def test_non_superuser_cannot_create_waiver_for_other_users(mocked_get_user, cli
 @patch('waiverdb.auth.get_user', return_value=('bodhi', {}))
 def test_superuser_can_create_waiver_for_other_users(mocked_get_user, client, session):
     data = {
-        'result_id': 123,
+        'subject': {'subject.test': 'subject'},
+        'testcase': 'testcase1',
         'product_version': 'fool-1',
         'waived': True,
         'comment': 'it broke',
@@ -75,13 +92,15 @@ def test_superuser_can_create_waiver_for_other_users(mocked_get_user, client, se
 
 def test_get_waiver(client, session):
     # create a new waiver
-    waiver = create_waiver(session, result_id=123, username='foo',
+    waiver = create_waiver(session, subject={'subject.test': 'subject'},
+                           testcase='testcase1', username='foo',
                            product_version='foo-1', comment='bla bla bla')
     r = client.get('/api/v1.0/waivers/%s' % waiver.id)
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert res_data['username'] == waiver.username
-    assert res_data['result_id'] == waiver.result_id
+    assert res_data['subject'] == waiver.subject
+    assert res_data['testcase'] == waiver.testcase
     assert res_data['product_version'] == waiver.product_version
     assert res_data['waived'] is True
     assert res_data['comment'] == waiver.comment
@@ -107,7 +126,8 @@ def test_500(mocked, client, session):
 
 def test_get_waivers(client, session):
     for i in range(0, 10):
-        create_waiver(session, result_id=i, username='foo %d' % i,
+        create_waiver(session, subject={"subject%d" % i: "%d" % i},
+                      testcase="case %d" % i, username='foo %d' % i,
                       product_version='foo-%d' % i, comment='bla bla bla')
     r = client.get('/api/v1.0/waivers/')
     res_data = json.loads(r.get_data(as_text=True))
@@ -117,7 +137,8 @@ def test_get_waivers(client, session):
 
 def test_pagination_waivers(client, session):
     for i in range(0, 30):
-        create_waiver(session, result_id=i, username='foo %d' % i,
+        create_waiver(session, subject={"subject%d" % i: "%d" % i},
+                      testcase="case %d" % i, username='foo %d' % i,
                       product_version='foo-%d' % i, comment='bla bla bla')
     r = client.get('/api/v1.0/waivers/?page=2')
     res_data = json.loads(r.get_data(as_text=True))
@@ -130,9 +151,11 @@ def test_pagination_waivers(client, session):
 
 
 def test_obsolete_waivers_are_excluded_by_default(client, session):
-    create_waiver(session, result_id=123, username='foo',
+    create_waiver(session, subject={'subject.test': 'subject'},
+                  testcase='testcase1', username='foo',
                   product_version='foo-1')
-    new_waiver = create_waiver(session, result_id=123, username='foo',
+    new_waiver = create_waiver(session, subject={'subject.test': 'subject'},
+                               testcase='testcase1', username='foo',
                                product_version='foo-1', waived=False)
     r = client.get('/api/v1.0/waivers/')
     res_data = json.loads(r.get_data(as_text=True))
@@ -143,9 +166,11 @@ def test_obsolete_waivers_are_excluded_by_default(client, session):
 
 
 def test_get_obsolete_waivers(client, session):
-    old_waiver = create_waiver(session, result_id=123, username='foo',
+    old_waiver = create_waiver(session, subject={'subject.test': 'subject'},
+                               testcase='testcase1', username='foo',
                                product_version='foo-1')
-    new_waiver = create_waiver(session, result_id=123, username='foo',
+    new_waiver = create_waiver(session, subject={'subject.test': 'subject'},
+                               testcase='testcase1', username='foo',
                                product_version='foo-1', waived=False)
     r = client.get('/api/v1.0/waivers/?include_obsolete=1')
     res_data = json.loads(r.get_data(as_text=True))
@@ -155,31 +180,60 @@ def test_get_obsolete_waivers(client, session):
     assert res_data['data'][1]['id'] == old_waiver.id
 
 
-def test_filtering_waivers_by_result_id(client, session):
-    create_waiver(session, result_id=123, username='foo-1', product_version='foo-1')
-    create_waiver(session, result_id=234, username='foo-2', product_version='foo-1')
-    r = client.get('/api/v1.0/waivers/?result_id=123')
+def test_filtering_waivers_by_subject_and_testcase(client, session):
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo-1', product_version='foo-1')
+    create_waiver(session, subject={'subject.test2': 'subject2'},
+                  testcase='testcase2', username='foo-2', product_version='foo-1')
+
+    param = json.dumps([{'subject': {'subject.test1': 'subject1'}, 'testcase': 'testcase1'}])
+    r = client.get('/api/v1.0/waivers/?results=%s' % param)
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert len(res_data['data']) == 1
-    assert res_data['data'][0]['result_id'] == 123
+    assert res_data['data'][0]['subject'] == {'subject.test1': 'subject1'}
+    assert res_data['data'][0]['testcase'] == 'testcase1'
 
 
-def test_filtering_waivers_by_multiple_result_ids(client, session):
-    create_waiver(session, result_id=123, username='foo-1', product_version='foo-1')
-    create_waiver(session, result_id=234, username='foo-2', product_version='foo-1')
-    create_waiver(session, result_id=345, username='foo-2', product_version='foo-1')
-    r = client.get('/api/v1.0/waivers/?result_id=123,345')
+def test_filtering_waivers_by_multiple_results_subjects_and_testcases(client, session):
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo-1', product_version='foo-1')
+    create_waiver(session, subject={'subject.test2': 'subject2'},
+                  testcase='testcase2', username='foo-2', product_version='foo-1')
+    create_waiver(session, subject={'subject.test3': 'subject3'},
+                  testcase='testcase3', username='foo-2', product_version='foo-1')
+    param = json.dumps([{'subject': {'subject.test1': 'subject1'}, 'testcase': 'testcase1'},
+                        {'subject': {'subject.test2': 'subject2'}, 'testcase': 'testcase2'}])
+    r = client.get('/api/v1.0/waivers/?results=%s' % param)
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert len(res_data['data']) == 2
-    assert res_data['data'][0]['result_id'] == 345
-    assert res_data['data'][1]['result_id'] == 123
+    assert res_data['data'][0]['subject'] == {'subject.test2': 'subject2'}
+    assert res_data['data'][0]['testcase'] == 'testcase2'
+    assert res_data['data'][1]['subject'] == {'subject.test1': 'subject1'}
+    assert res_data['data'][1]['testcase'] == 'testcase1'
+
+
+def test_filtering_waivers_by_subject_without_testcase(client, session):
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo-1', product_version='foo-1')
+    create_waiver(session, subject={'subject.test2': 'subject2'},
+                  testcase='testcase2', username='foo-2', product_version='foo-1')
+
+    param = json.dumps([{'subject': {'subject.test1': 'subject1'}}])
+    r = client.get('/api/v1.0/waivers/?results=%s' % param)
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 200
+    assert len(res_data['data']) == 1
+    assert res_data['data'][0]['subject'] == {'subject.test1': 'subject1'}
+    assert res_data['data'][0]['testcase'] == 'testcase1'
 
 
 def test_filtering_waivers_by_product_version(client, session):
-    create_waiver(session, result_id=123, username='foo-1', product_version='release-1')
-    create_waiver(session, result_id=124, username='foo-1', product_version='release-2')
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo-1', product_version='release-1')
+    create_waiver(session, subject={'subject.test2': 'subject2'},
+                  testcase='testcase2', username='foo-1', product_version='release-2')
     r = client.get('/api/v1.0/waivers/?product_version=release-1')
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
@@ -188,8 +242,10 @@ def test_filtering_waivers_by_product_version(client, session):
 
 
 def test_filtering_waivers_by_username(client, session):
-    create_waiver(session, result_id=123, username='foo', product_version='foo-1')
-    create_waiver(session, result_id=124, username='bar', product_version='foo-2')
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo', product_version='foo-1')
+    create_waiver(session, subject={'subject.test2': 'subject2'},
+                  testcase='testcase2', username='bar', product_version='foo-2')
     r = client.get('/api/v1.0/waivers/?username=foo')
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
@@ -201,18 +257,21 @@ def test_filtering_waivers_by_since(client, session):
     before1 = (datetime.datetime.utcnow() - datetime.timedelta(seconds=100)).isoformat()
     before2 = (datetime.datetime.utcnow() - datetime.timedelta(seconds=99)).isoformat()
     after = (datetime.datetime.utcnow() + datetime.timedelta(seconds=100)).isoformat()
-    create_waiver(session, result_id=123, username='foo', product_version='foo-1')
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo', product_version='foo-1')
     r = client.get('/api/v1.0/waivers/?since=%s' % before1)
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert len(res_data['data']) == 1
-    assert res_data['data'][0]['result_id'] == 123
+    assert res_data['data'][0]['subject'] == {'subject.test1': 'subject1'}
+    assert res_data['data'][0]['testcase'] == 'testcase1'
 
     r = client.get('/api/v1.0/waivers/?since=%s,%s' % (before1, after))
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert len(res_data['data']) == 1
-    assert res_data['data'][0]['result_id'] == 123
+    assert res_data['data'][0]['subject'] == {'subject.test1': 'subject1'}
+    assert res_data['data'][0]['testcase'] == 'testcase1'
 
     r = client.get('/api/v1.0/waivers/?since=%s' % (after))
     res_data = json.loads(r.get_data(as_text=True))
@@ -225,19 +284,33 @@ def test_filtering_waivers_by_since(client, session):
     assert len(res_data['data']) == 0
 
 
+def test_filtering_waivers_by_malformed_since(client, session):
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo', product_version='foo-1')
+    wrong_since = 123
+    r = client.get('/api/v1.0/waivers/?since=%s' % wrong_since)
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 400
+    assert res_data['message'] == "'since' parameter not in ISO8601 format"
+
+
 def test_filtering_waivers_by_proxied_by(client, session):
-    create_waiver(session, result_id=123, username='foo-1', product_version='foo-1',
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo-1', product_version='foo-1',
                   proxied_by='bodhi')
-    create_waiver(session, result_id=234, username='foo-2', product_version='foo-1')
+    create_waiver(session, subject={'subject.test2': 'subject2'},
+                  testcase='testcase2', username='foo-2', product_version='foo-1')
     r = client.get('/api/v1.0/waivers/?proxied_by=bodhi')
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert len(res_data['data']) == 1
-    assert res_data['data'][0]['result_id'] == 123
+    assert res_data['data'][0]['subject'] == {'subject.test1': 'subject1'}
+    assert res_data['data'][0]['testcase'] == 'testcase1'
 
 
 def test_jsonp(client, session):
-    waiver = create_waiver(session, result_id=123, username='foo', product_version='foo-1')
+    waiver = create_waiver(session, subject={'subject.test1': 'subject1'},
+                           testcase='testcase1', username='foo', product_version='foo-1')
     r = client.get('/api/v1.0/waivers/%s?callback=jsonpcallback' % waiver.id)
     assert r.mimetype == 'application/javascript'
     assert 'jsonpcallback' in r.get_data(as_text=True)
@@ -252,23 +325,45 @@ def test_healthcheck(client):
 def test_get_waivers_with_post_request(client, session):
     """
     This tests that users can get waivers by sending a POST request with a long
-    list of result ids.
+    list of result subject/testcase.
     """
-    result_ids = []
+    results = []
     for i in range(1, 51):
-        result_ids.append(str(i))
-        create_waiver(session, result_id=i, username='foo', product_version='foo-1')
+        results.append({'subject': {'subject%d' % i: '%d' % i},
+                        'testcase': 'case %d' % i})
+        create_waiver(session, subject={"subject%d" % i: "%d" % i},
+                      testcase="case %d" % i, username='foo %d' % i,
+                      product_version='foo-%d' % i, comment='bla bla bla')
     data = {
-        'result_ids': result_ids
+        'results': results
     }
-    r = client.post('/api/v1.0/waivers/+by-result-ids', data=json.dumps(data),
+    r = client.post('/api/v1.0/waivers/+by-subjects-and-testcases', data=json.dumps(data),
                     content_type='application/json')
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 200
     assert len(res_data['data']) == 50
-    assert set([w['result_id'] for w in res_data['data']]) == set(range(1, 51))
-    assert all(w['username'] == 'foo' for w in res_data['data'])
-    assert all(w['product_version'] == 'foo-1' for w in res_data['data'])
+    subjects = []
+    testcases = []
+    for i in reversed(range(1, 51)):
+        subjects.append({'subject%d' % i: '%d' % i})
+        testcases.append('case %d' % i)
+    assert [w['subject'] for w in res_data['data']] == subjects
+    assert set([w['testcase'] for w in res_data['data']]) == set(testcases)
+    assert all(w['username'].startswith('foo') for w in res_data['data'])
+    assert all(w['product_version'].startswith('foo-') for w in res_data['data'])
+
+
+def test_get_waivers_with_post_malformed_since(client, session):
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo', product_version='foo-1')
+    data = {
+        'since': 123
+    }
+    r = client.post('/api/v1.0/waivers/+by-subjects-and-testcases', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 400
+    assert res_data['message'] == "'since' parameter not in ISO8601 format"
 
 
 def test_about_endpoint(client):

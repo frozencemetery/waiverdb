@@ -38,7 +38,8 @@ class TestKerberosAuthentication(object):
                         client, monkeypatch, session):
         monkeypatch.setenv('KRB5_KTNAME', '/etc/foo.keytab')
         data = {
-            'result_id': 123,
+            'subject': {'subject.test': 'subject'},
+            'testcase': 'testcase1',
             'product_version': 'fool-1',
             'waived': True,
             'comment': 'it broke',

@@ -2,9 +2,11 @@
 
 from flask_restful import fields
 
+
 waiver_fields = {
     'id': fields.Integer,
-    'result_id': fields.Integer,
+    'subject': fields.Raw,
+    'testcase': fields.String,
     'username': fields.String,
     'proxied_by': fields.String,
     'product_version': fields.String,

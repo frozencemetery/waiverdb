@@ -48,7 +48,8 @@ def publish_new_waiver(session):
             "waived": true,
             "timestamp": "2017-03-16T17:42:04.209638",
             "product_version": "Satellite 6.3",
-            "result_id": 1,
+            "subject": "{\"a.nice.example\": \"this-is-a-really-nice-example\"}",
+            "testcase": "t.e.s.t.case",
             "proxied_by": null,
             "id": 15
           }

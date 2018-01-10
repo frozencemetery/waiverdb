@@ -9,7 +9,8 @@ from waiverdb.models import Waiver
 @mock.patch('waiverdb.events.fedmsg')
 def test_publish_new_waiver_with_fedmsg(mock_fedmsg, session):
     waiver = Waiver(
-        result_id=1,
+        subject={'subject.test': 'subject'},
+        testcase='testcase1',
         username='jcline',
         product_version='something',
         waived=True,
@@ -22,7 +23,8 @@ def test_publish_new_waiver_with_fedmsg(mock_fedmsg, session):
         topic='waiver.new',
         msg={
             'id': waiver.id,
-            'result_id': 1,
+            'subject': {'subject.test': 'subject'},
+            'testcase': 'testcase1',
             'username': 'jcline',
             'proxied_by': None,
             'product_version': 'something',
@@ -36,7 +38,8 @@ def test_publish_new_waiver_with_fedmsg(mock_fedmsg, session):
 @mock.patch('waiverdb.events.fedmsg')
 def test_publish_new_waiver_with_fedmsg_for_proxy_user(mock_fedmsg, session):
     waiver = Waiver(
-        result_id=1,
+        subject={'subject.test': 'subject'},
+        testcase='testcase1',
         username='jcline',
         product_version='something',
         waived=True,
@@ -50,7 +53,8 @@ def test_publish_new_waiver_with_fedmsg_for_proxy_user(mock_fedmsg, session):
         topic='waiver.new',
         msg={
             'id': waiver.id,
-            'result_id': 1,
+            'subject': {'subject.test': 'subject'},
+            'testcase': 'testcase1',
             'username': 'jcline',
             'proxied_by': 'bodhi',
             'product_version': 'something',
