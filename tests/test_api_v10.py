@@ -195,6 +195,19 @@ def test_filtering_waivers_by_subject_and_testcase(client, session):
     assert res_data['data'][0]['testcase'] == 'testcase1'
 
 
+def test_filtering_waivers_by_subject_and_testcase_with_other_json_order(client, session):
+    create_waiver(session, subject={'subject.test1': 'subject1'},
+                  testcase='testcase1', username='foo-1', product_version='foo-1')
+
+    param = json.dumps([{'testcase': 'testcase1', 'subject': {'subject.test1': 'subject1'}}])
+    r = client.get('/api/v1.0/waivers/?results=%s' % param)
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 200
+    assert len(res_data['data']) == 1
+    assert res_data['data'][0]['subject'] == {'subject.test1': 'subject1'}
+    assert res_data['data'][0]['testcase'] == 'testcase1'
+
+
 def test_filtering_waivers_by_multiple_results_subjects_and_testcases(client, session):
     create_waiver(session, subject={'subject.test1': 'subject1'},
                   testcase='testcase1', username='foo-1', product_version='foo-1')

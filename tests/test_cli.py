@@ -95,7 +95,7 @@ oidc_scopes=
     assert result.output == 'Error: Please specify product version\n'
 
 
-def test_no_result_id(tmpdir):
+def test_no_subject(tmpdir):
     p = tmpdir.join('client.conf')
     p.write("""
 [waiverdb]
@@ -110,7 +110,25 @@ oidc_scopes=
     args = ['-C', p.strpath, '-p', 'fedora-26']
     result = runner.invoke(waiverdb_cli, args)
     assert result.exit_code == 1
-    assert result.output == 'Error: Please specify one or more result ids to waive\n'
+    assert result.output == 'Error: Please specify one subject\n'
+
+
+def test_no_testcase(tmpdir):
+    p = tmpdir.join('client.conf')
+    p.write("""
+[waiverdb]
+auth_method=OIDC
+api_url=http://localhost:5004/api/v1.0
+oidc_id_provider=https://id.stg.fedoraproject.org/openidc/
+oidc_client_id=waiverdb
+oidc_scopes=
+    openid
+        """)
+    runner = CliRunner()
+    args = ['-C', p.strpath, '-p', 'fedora-26', '-s', 'subject']
+    result = runner.invoke(waiverdb_cli, args)
+    assert result.exit_code == 1
+    assert result.output == 'Error: Please specify testcase\n'
 
 
 def test_oidc_auth_is_enabled(tmpdir):
@@ -123,7 +141,8 @@ def test_oidc_auth_is_enabled(tmpdir):
             "comment": "It's dead!",
             "id": 15,
             "product_version": "Parrot",
-            "result_id": 123,
+            "subject": {"subject.test": "test", "s": "t"},
+            "testcase": "test.testcase",
             "timestamp": "2017-010-16T17:42:04.209638",
             "username": "foo",
             "waived": True
@@ -140,10 +159,12 @@ oidc_scopes=
     openid
             """)
         runner = CliRunner()
-        args = ['-C', p.strpath, '-p', 'Parrot', '-r', 123, '-c', "It's dead!"]
+        args = ['-C', p.strpath, '-p', 'Parrot', '-s', '{"subject.test": "test", "s": "t"}',
+                '-t', 'test.testcase', '-c', "It's dead!"]
         result = runner.invoke(waiverdb_cli, args)
         exp_json = {
-            'result_id': 123,
+            "subject": {"subject.test": "test", "s": "t"},
+            "testcase": "test.testcase",
             'waived': True,
             'product_version': 'Parrot',
             'comment': "It's dead!"
@@ -155,7 +176,7 @@ oidc_scopes=
             timeout=60,
             headers={'Content-Type': 'application/json'})
         assert result.exit_code == 0
-        assert result.output == 'Created waiver 15 for result 123\n'
+        assert result.output == 'Created waiver 15 for result with subject {"subject.test": "test", "s": "t"} and testcase test.testcase\n' # noqa
 
 
 def test_kerberos_is_enabled(tmpdir):
@@ -168,7 +189,8 @@ def test_kerberos_is_enabled(tmpdir):
             "comment": "It's dead!",
             "id": 15,
             "product_version": "Parrot",
-            "result_id": 123,
+            "subject": {"subject.test": "test", "s": "t"},
+            "testcase": "test.testcase",
             "timestamp": "2017-010-16T17:42:04.209638",
             "username": "foo",
             "waived": True
@@ -181,7 +203,8 @@ auth_method=Kerberos
 api_url=http://localhost:5004/api/v1.0
             """)
         runner = CliRunner()
-        args = ['-C', p.strpath, '-p', 'Parrot', '-r', 123, '-c', "It's dead!"]
+        args = ['-C', p.strpath, '-p', 'Parrot', '-s', '{"subject.test": "test", "s": "t"}',
+                '-t', 'test.testcase', '-c', "It's dead!"]
         result = runner.invoke(waiverdb_cli, args)
         mock_request.assert_called_once()
-        assert result.output == 'Created waiver 15 for result 123\n'
+        assert result.output == 'Created waiver 15 for result with subject {"subject.test": "test", "s": "t"} and testcase test.testcase\n' # noqa
