@@ -12,7 +12,7 @@ node('fedora') {
         sh 'flake8'
     }
     stage('Invoke Pylint') {
-        sh 'pylint --reports=n waiverdb'
+        sh 'pylint-2 --reports=n waiverdb'
     }
     stage('Build Docs') {
         sh 'make -C docs html'
