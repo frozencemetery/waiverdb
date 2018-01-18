@@ -2,6 +2,25 @@
 Release Notes
 =============
 
+WaiverDB 0.5
+============
+
+Released 17 Jan 2018.
+
+* Database migrations have been introduced, and will be a part of future
+  releases.  Users upgrading to 0.5 will need to run these commands::
+
+  $ waiverdb db stamp 0a27a8ad723a
+  $ waiverdb db upgrade
+
+* Error messages are now returned by the API in JSON format.
+
+* A new authentication method: ssl auth.  See the docs for more on
+  configuration.
+
+* The API now supports a proxyuser argument.  A limited set of superusers,
+  configured server-side, are able to submit waivers on behalf of other users.
+
 WaiverDB 0.4
 ============
 
@@ -43,15 +62,15 @@ WaiverDB 0.2
 Released 16 June 2017.
 
 * Supports containerized deployment in OpenShift. ``DATABASE_PASSWORD`` and
-  ``FLASK_SECRET_KEY`` can now be passed in as environment variables instead of 
+  ``FLASK_SECRET_KEY`` can now be passed in as environment variables instead of
   being defined in the configuration file.
 
 * Supports publishing messages over AMQP, in addition to Fedmsg.
-  The ``ZEROMQ_PUBLISH`` configuration option has been renamed to 
+  The ``ZEROMQ_PUBLISH`` configuration option has been renamed to
   ``MESSAGE_BUS_PUBLISH``.
 
 * The :file:`/etc/waiverdb/settings.py` configuration file is no longer
-  installed by default. For new installations, you can copy the example 
+  installed by default. For new installations, you can copy the example
   configuration from :file:`/usr/share/doc/waiverdb/conf/settings.py.example`.
 
 * Numerous improvements to the test and build process for WaiverDB.
