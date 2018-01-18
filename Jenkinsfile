@@ -52,14 +52,6 @@ node('fedora') {
      * time, which will error out. */
     stage('Build RPM') {
         parallel (
-            'EPEL7': {
-                sh """
-                mkdir -p mock-result/el7
-                flock /etc/mock/epel-7-x86_64.cfg \
-                /usr/bin/mock --resultdir=mock-result/el7 -r epel-7-x86_64 --clean --rebuild rpmbuild-output/*.src.rpm
-                """
-                archiveArtifacts artifacts: 'mock-result/el7/**'
-            },
             'F25': {
                 sh """
                 mkdir -p mock-result/f25
@@ -80,9 +72,6 @@ node('fedora') {
     }
     stage('Invoke Rpmlint') {
         parallel (
-            'EPEL7': {
-                sh 'rpmlint -f rpmlint-config.py mock-result/el7/*.rpm'
-            },
             'F25': {
                 sh 'rpmlint -f rpmlint-config.py mock-result/f25/*.rpm'
             },
