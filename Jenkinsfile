@@ -155,6 +155,19 @@ node('fedora') {
         }
     }
 }
+node('docker') {
+    checkout scm
+    stage('Tag container with "master"') {
+        unarchive mapping: ['appversion': 'appversion']
+        def appversion = readFile('appversion').trim()
+        docker.withRegistry(
+                'https://docker-registry.engineering.redhat.com/',
+                'docker-registry-factory2-builder-sa-credentials') {
+            def image = docker.image("factory2/waiverdb:${appversion}")
+            image.push('master')
+        }
+    }
+}
 
 } catch (e) {
     if (ownership.job.ownershipEnabled) {
