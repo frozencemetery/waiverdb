@@ -67,7 +67,11 @@ Requires:       python-sqlalchemy
 %endif
 Requires:       python2-flask-restful
 Requires:       python2-flask-sqlalchemy
+%if 0%{?fedora} > 27
 Requires:       python2-sqlalchemy-utils
+%else
+Requires:       python-sqlalchemy-utils
+%endif
 Requires:       python2-kerberos
 Requires:       python2-systemd
 Requires:       python2-mock
