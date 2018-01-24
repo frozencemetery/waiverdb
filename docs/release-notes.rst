@@ -53,7 +53,7 @@ A number of issues have been resolved in this release:
 Other updates
 -------------
 
-* Supports a new HTTP API :http:post:`/api/v1.0/waivers/+by-result-ids`.
+* Supports a new HTTP API `/api/v1.0/waivers/+by-result-ids`.
 * Package dependencies are switched to python2-* packages in Fedora.
 
 WaiverDB 0.2
