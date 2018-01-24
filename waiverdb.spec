@@ -23,7 +23,11 @@ BuildRequires:  python-sqlalchemy
 %endif
 BuildRequires:  python2-flask-restful
 BuildRequires:  python2-flask-sqlalchemy
+%if 0%{?fedora} > 27
 BuildRequires:  python2-sqlalchemy-utils
+%else
+BuildRequires:  python-sqlalchemy-utils
+%endif
 BuildRequires:  python2-kerberos
 BuildRequires:  python2-systemd
 BuildRequires:  python2-pytest
