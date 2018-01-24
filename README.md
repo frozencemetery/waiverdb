@@ -1,5 +1,9 @@
 # WaiverDB
 
+![logo of WaiverDB](https://pagure.io/waiverdb/raw/master/f/logo.png)
+
+## What is WaiverDB
+
 WaiverDB is a companion service to
 [ResultsDB](https://pagure.io/taskotron/resultsdb), for recording waivers
 against test results.
