@@ -228,7 +228,7 @@ class WaiverResource(Resource):
         try:
             return Waiver.query.get_or_404(waiver_id)
         except Exception as NotFound:
-            raise NotFound('Waiver not found')
+            raise type(NotFound)('Waiver not found')
 
 
 class GetWaiversBySubjectsAndTestcases(Resource):
