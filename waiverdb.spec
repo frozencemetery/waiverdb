@@ -114,9 +114,11 @@ Summary: A CLI tool for interacting with waiverdb
 %if 0%{?fedora} || 0%{?rhel} > 7
 BuildRequires:  python2-click
 Requires:       python2-click
+Requires:       python2-configparser
 %else
 BuildRequires:  python-click
 Requires:       python-click
+Requires:       python-configparser
 %endif
 
 Requires:       waiverdb-common = %{version}-%{release}
