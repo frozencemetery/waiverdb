@@ -31,12 +31,34 @@ def validate_config(config):
     for required_config in required_configs:
         if not config.has_option('waiverdb', required_config):
             raise click.ClickException(config_error.format(required_config))
+    if not config.has_option('waiverdb', 'resultsdb_api_url'):
+        raise click.ClickException(config_error.format('resultsdb_api_url'))
+
+
+def check_response(resp, data):
+    if 'result_id' in data:
+        msg = 'for result with id {0}'.format(data['result_id'])
+    else:
+        msg = 'for result with subject {0} and testcase {1}'.format(json.dumps(data['subject']),
+                                                                    data['testcase'])
+    if not resp.ok:
+        try:
+            error_msg = resp.json()['message']
+        except (ValueError, KeyError):
+            error_msg = resp.text
+        raise click.ClickException(
+            'Failed to create waiver {0}:\n{1}'
+            .format(msg, error_msg))
+    click.echo('Created waiver {0} {1}'.format(
+        resp.json()['id'], msg))
 
 
 @click.command(context_settings={'help_option_names': ['-h', '--help']})
 @click.option('--config-file', '-C', default='/etc/waiverdb/client.conf',
               type=click.Path(exists=True),
               help='Specify a config file to use')
+@click.option('--result-id', '-r', multiple=True, type=int,
+              help='Specify one or more results to be waived')
 @click.option('--subject', '-s',
               help='Specify one subject for a result to waive')
 @click.option('--testcase', '-t',
@@ -47,11 +69,15 @@ def validate_config(config):
               help='Whether or not the result is waived')
 @click.option('--comment', '-c',
               help='A comment explaining why the result is waived')
-def cli(comment, waived, product_version, testcase, subject, config_file):
+def cli(comment, waived, product_version, testcase, subject, result_id, config_file):
     """
-    Creates new waivers against test results.
+    Creates new waiver against test results.
 
     Examples:
+
+        waiverdb-cli -r 123 -r 456 -p "fedora-26" -c "It's dead!"
+
+        or
 
         waiverdb-cli -t dist.rpmlint -s '{"item": "python-requests-1.2.3-1.fc26",
                                           "type": "koji_build"}'
@@ -63,21 +89,54 @@ def cli(comment, waived, product_version, testcase, subject, config_file):
     config.read(config_file)
     validate_config(config)
 
+    result_ids = result_id
     if not product_version:
         raise click.ClickException('Please specify product version')
-    if not subject:
+    if result_ids and (subject or testcase):
+        raise click.ClickException('Please specify result_id or subject/testcase. Not both')
+    if not result_ids and not subject:
         raise click.ClickException('Please specify one subject')
-    if not testcase:
+    if not result_ids and not testcase:
         raise click.ClickException('Please specify testcase')
 
     auth_method = config.get('waiverdb', 'auth_method')
-    data = {
-        'subject': json.loads(subject),
-        'testcase': testcase,
-        'waived': waived,
-        'product_version': product_version,
-        'comment': comment
-    }
+    data_list = []
+    if result_ids:
+        for result_id in result_ids:
+            result = requests.request('GET', '{0}/results/{1}'.format(config.get('waiverdb',
+                                      'resultsdb_api_url'), result_id),
+                                      headers={'Content-Type': 'application/json'},
+                                      timeout=60)
+            if 'original_spec_nvr' in result.json():
+                subject = {'original_spec_nvr': result.json()['original_spec_nvr']}
+            else:
+                if result.json()['data']['type'][0] == 'koji_build' or \
+                   result.json()['data']['type'][0] == 'bodhi_update':
+                    SUBJECT_KEYS = ['item', 'type']
+                    subject = dict([(k, v[0]) for k, v in result.json()['data'].items()
+                                    if k in SUBJECT_KEYS])
+                else:
+                    raise click.ClickException('It is not possible to submit a waiver by \
+                                                id for this result. Please try again specifying \
+                                                a subject and a testcase.')
+
+            data_list.append({
+                'result_id': result_id,
+                'subject': subject,
+                'testcase': result.json()['testcase']['name'],
+                'waived': waived,
+                'product_version': product_version,
+                'comment': comment
+            })
+    else:
+        data_list.append({
+            'subject': json.loads(subject),
+            'testcase': testcase,
+            'waived': waived,
+            'product_version': product_version,
+            'comment': comment
+        })
+
     api_url = config.get('waiverdb', 'api_url')
     if auth_method == 'OIDC':
         # Try to import this now so the user gets immediate feedback if
@@ -97,12 +156,15 @@ def cli(comment, waived, product_version, testcase, subject, config_file):
             config.get('waiverdb', 'oidc_client_id'),
             oidc_client_secret)
         scopes = config.get('waiverdb', 'oidc_scopes').strip().splitlines()
-        resp = oidc.send_request(
-            scopes=scopes,
-            url='{0}/waivers/'.format(api_url.rstrip('/')),
-            data=json.dumps(data),
-            headers={'Content-Type': 'application/json'},
-            timeout=60)
+
+        for data in data_list:
+            resp = oidc.send_request(
+                scopes=scopes,
+                url='{0}/waivers/'.format(api_url.rstrip('/')),
+                data=json.dumps(data),
+                headers={'Content-Type': 'application/json'},
+                timeout=60)
+            check_response(resp, data)
     elif auth_method == 'Kerberos':
         # Try to import this now so the user gets immediate feedback if
         # it isn't installed
@@ -111,28 +173,22 @@ def cli(comment, waived, product_version, testcase, subject, config_file):
         except ImportError:
             raise click.ClickException('python-requests-kerberos needs to be installed')
         auth = requests_kerberos.HTTPKerberosAuth(mutual_authentication=requests_kerberos.OPTIONAL)
-        resp = requests.request('POST', '{0}/waivers/'.format(api_url.rstrip('/')),
-                                data=json.dumps(data), auth=auth,
-                                headers={'Content-Type': 'application/json'},
-                                timeout=60)
-        if resp.status_code == 401:
-            raise click.ClickException('WaiverDB authentication using Kerberos failed. '
-                                       'Make sure you have a valid Kerberos ticket.')
+        for data in data_list:
+            resp = requests.request('POST', '{0}/waivers/'.format(api_url.rstrip('/')),
+                                    data=json.dumps(data), auth=auth,
+                                    headers={'Content-Type': 'application/json'},
+                                    timeout=60)
+            if resp.status_code == 401:
+                raise click.ClickException('WaiverDB authentication using Kerberos failed. '
+                                           'Make sure you have a valid Kerberos ticket.')
+            check_response(resp, data)
     elif auth_method == 'dummy':
-        resp = requests.request('POST', '{0}/waivers/'.format(api_url.rstrip('/')),
-                                data=json.dumps(data), auth=('user', 'pass'),
-                                headers={'Content-Type': 'application/json'},
-                                timeout=60)
-    if not resp.ok:
-        try:
-            error_msg = resp.json()['message']
-        except (ValueError, KeyError):
-            error_msg = resp.text
-        raise click.ClickException(
-            'Failed to create waiver for result with subject {0} and testcase {1}:\n{2}'
-            .format(subject, testcase, error_msg))
-    click.echo('Created waiver {0} for result with subject {1} and testcase {2}'.format(
-        resp.json()['id'], subject, testcase))
+        for data in data_list:
+            resp = requests.request('POST', '{0}/waivers/'.format(api_url.rstrip('/')),
+                                    data=json.dumps(data), auth=('user', 'pass'),
+                                    headers={'Content-Type': 'application/json'},
+                                    timeout=60)
+            check_response(resp, data)
 
 
 if __name__ == '__main__':

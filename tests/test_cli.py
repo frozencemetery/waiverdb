@@ -32,6 +32,20 @@ auth_method=OIDC
     assert result.output == 'Error: The config option "api_url" is required\n'
 
 
+def test_misconfigured_resultdb_api_url(tmpdir):
+    p = tmpdir.join('client.conf')
+    p.write("""
+[waiverdb]
+auth_method=dummy
+api_url=http://localhost:5004/api/v1.0
+        """)
+    runner = CliRunner()
+    args = ['-C', p.strpath]
+    result = runner.invoke(waiverdb_cli, args)
+    assert result.exit_code == 1
+    assert result.output == 'Error: The config option "resultsdb_api_url" is required\n'
+
+
 def test_misconfigured_oidc_id_provider(tmpdir):
     p = tmpdir.join('client.conf')
     p.write("""
@@ -87,6 +101,7 @@ oidc_id_provider=https://id.stg.fedoraproject.org/openidc/
 oidc_client_id=waiverdb
 oidc_scopes=
     openid
+resultsdb_api_url=http://localhost:5001/api/v2.0
         """)
     runner = CliRunner()
     args = ['-C', p.strpath]
@@ -105,6 +120,7 @@ oidc_id_provider=https://id.stg.fedoraproject.org/openidc/
 oidc_client_id=waiverdb
 oidc_scopes=
     openid
+resultsdb_api_url=http://localhost:5001/api/v2.0
         """)
     runner = CliRunner()
     args = ['-C', p.strpath, '-p', 'fedora-26']
@@ -123,6 +139,7 @@ oidc_id_provider=https://id.stg.fedoraproject.org/openidc/
 oidc_client_id=waiverdb
 oidc_scopes=
     openid
+resultsdb_api_url=http://localhost:5001/api/v2.0
         """)
     runner = CliRunner()
     args = ['-C', p.strpath, '-p', 'fedora-26', '-s', 'subject']
@@ -157,6 +174,7 @@ oidc_id_provider=https://id.stg.fedoraproject.org/openidc/
 oidc_client_id=waiverdb
 oidc_scopes=
     openid
+resultsdb_api_url=http://localhost:5001/api/v2.0
             """)
         runner = CliRunner()
         args = ['-C', p.strpath, '-p', 'Parrot', '-s', '{"subject.test": "test", "s": "t"}',
@@ -201,6 +219,7 @@ def test_kerberos_is_enabled(tmpdir):
 [waiverdb]
 auth_method=Kerberos
 api_url=http://localhost:5004/api/v1.0
+resultsdb_api_url=http://localhost:5001/api/v2.0
             """)
         runner = CliRunner()
         args = ['-C', p.strpath, '-p', 'Parrot', '-s', '{"subject.test": "test", "s": "t"}',
@@ -208,3 +227,110 @@ api_url=http://localhost:5004/api/v1.0
         result = runner.invoke(waiverdb_cli, args)
         mock_request.assert_called_once()
         assert result.output == 'Created waiver 15 for result with subject {"subject.test": "test", "s": "t"} and testcase test.testcase\n' # noqa
+
+
+def test_submit_waiver_with_id(tmpdir):
+    with patch('requests.request') as mock_request:
+        mock_rv = Mock()
+        mock_rv.json.return_value = {
+            "comment": "It's dead!",
+            "data": {"item": ["htop-1.0-1.fc22"], "type": ["bodhi_update"]},
+            "id": 15,
+            "product_version": "Parrot",
+            "subject": {"subject.test": "test", "s": "t"},
+            "testcase": {"name": "test.testcase"},
+            "timestamp": "2017-010-16T17:42:04.209638",
+            "username": "foo",
+            "waived": True
+        }
+        mock_request.return_value = mock_rv
+        p = tmpdir.join('client.conf')
+        p.write("""
+[waiverdb]
+auth_method=dummy
+api_url=http://localhost:5004/api/v1.0
+resultsdb_api_url=http://localhost:5001/api/v2.0
+        """)
+        runner = CliRunner()
+        args = ['-C', p.strpath, '-p', 'Parrot', '-r', '123',
+                '-c', "It's dead!"]
+        result = runner.invoke(waiverdb_cli, args)
+        mock_request.assert_called()
+        assert result.output == 'Created waiver 15 for result with id 123\n'
+
+
+def test_submit_waiver_with_multiple_ids(tmpdir):
+    with patch('requests.request') as mock_request:
+        mock_rv = Mock()
+        mock_rv.json.return_value = {
+            "comment": "It's dead!",
+            "data": {"item": ["htop-1.0-1.fc22"], "type": ["bodhi_update"]},
+            "id": 15,
+            "product_version": "Parrot",
+            "subject": {"subject.test": "test", "s": "t"},
+            "testcase": {"name": "test.testcase"},
+            "timestamp": "2017-010-16T17:42:04.209638",
+            "username": "foo",
+            "waived": True
+        }
+        mock_request.return_value = mock_rv
+        p = tmpdir.join('client.conf')
+        p.write("""
+[waiverdb]
+auth_method=dummy
+api_url=http://localhost:5004/api/v1.0
+resultsdb_api_url=http://localhost:5001/api/v2.0
+        """)
+        runner = CliRunner()
+        args = ['-C', p.strpath, '-p', 'Parrot', '-r', '123', '-r', '456',
+                '-c', "It's dead!"]
+        result = runner.invoke(waiverdb_cli, args)
+        mock_request.assert_called()
+
+        assert result.output == 'Created waiver 15 for result with id 123\n\
+Created waiver 15 for result with id 456\n'
+
+
+def test_malformed_submission_with_id_and_subject_and_testcase(tmpdir):
+        runner = CliRunner()
+        p = tmpdir.join('client.conf')
+        p.write("""
+[waiverdb]
+auth_method=dummy
+api_url=http://localhost:5004/api/v1.0
+resultsdb_api_url=http://localhost:5001/api/v2.0
+        """)
+        args = ['-C', p.strpath, '-p', 'Parrot', '-r', '123', '-s',
+                '{"subject.test": "test", "s": "t"}', '-c', "It's dead!"]
+        result = runner.invoke(waiverdb_cli, args)
+        assert result.output == 'Error: Please specify result_id or subject/testcase. Not both\n'
+
+
+def test_submit_waiver_for_original_spec_nvr_result(tmpdir):
+    with patch('requests.request') as mock_request:
+        mock_rv = Mock()
+        mock_rv.json.return_value = {
+            "comment": "It's dead!",
+            "original_spec_nvr": "test",
+            "id": 15,
+            "product_version": "Parrot",
+            "subject": {"subject.test": "test", "s": "t"},
+            "testcase": {"name": "test.testcase"},
+            "timestamp": "2017-010-16T17:42:04.209638",
+            "username": "foo",
+            "waived": True
+        }
+        mock_request.return_value = mock_rv
+        p = tmpdir.join('client.conf')
+        p.write("""
+[waiverdb]
+auth_method=dummy
+api_url=http://localhost:5004/api/v1.0
+resultsdb_api_url=http://localhost:5001/api/v2.0
+            """)
+        runner = CliRunner()
+        args = ['-C', p.strpath, '-p', 'Parrot', '-r', '123',
+                '-c', "It's dead!"]
+        result = runner.invoke(waiverdb_cli, args)
+        mock_request.assert_called()
+        assert result.output == 'Created waiver 15 for result with id 123\n'
