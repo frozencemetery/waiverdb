@@ -73,10 +73,16 @@ Usage: waiverdb-cli [OPTIONS]
   Examples:
 
       waiverdb-cli -r 123 -r 456 -p "fedora-26" -c "It's dead!"
+or
+
+      waiverdb-cli -t dist.rpmlint -s '{"item": "python-requests-1.2.3-1.fc26", "type": "koji_build"}' -p "fedora-26" -c "It's dead!"
+
 
 Options:
   -C, --config-file PATH      Specify a config file to use
   -r, --result-id INTEGER     Specify one or more results to be waived
+  -s, --subject TEXT          Specify one subject for a result to waive
+  -t, --testcase TEXT         Specify a testcase for the subject
   -p, --product-version TEXT  Specify one of PDC's product version
                               identifiers.
   --waived / --no-waived      Whether or not the result is waived
