@@ -3,8 +3,8 @@
 import json
 from .utils import create_waiver
 import datetime
-from requests import ConnectionError
-from mock import patch
+from requests import ConnectionError, HTTPError
+from mock import patch, Mock
 from waiverdb import __version__
 
 
@@ -29,16 +29,95 @@ def test_create_waiver(mocked_get_user, client, session):
     assert res_data['comment'] == 'it broke'
 
 
+@patch('waiverdb.api_v1.get_resultsdb_result')
+@patch('waiverdb.auth.get_user', return_value=('foo', {}))
+def test_create_waiver_legacy(mocked_get_user, mocked_resultsdb, client, session):
+    mocked_resultsdb.return_value = {
+        'data': {
+            'type': ['koji_build'],
+            'item': ['somebuild'],
+        },
+        'testcase': {'name': 'sometest'}
+    }
+
+    data = {
+        'result_id': 123,
+        'product_version': 'fool-1',
+        'waived': True,
+        'comment': 'it broke',
+    }
+    r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 201
+    assert res_data['username'] == 'foo'
+    assert res_data['subject'] == {'type': 'koji_build', 'item': 'somebuild'}
+    assert res_data['testcase'] == 'sometest'
+    assert res_data['product_version'] == 'fool-1'
+    assert res_data['waived'] is True
+    assert res_data['comment'] == 'it broke'
+
+
+@patch('waiverdb.api_v1.get_resultsdb_result')
+@patch('waiverdb.auth.get_user', return_value=('foo', {}))
+def test_create_waiver_with_original_spec_nvr_subject(mocked_get_user, mocked_resultsdb, client,
+                                                      session):
+    mocked_resultsdb.return_value = {
+        'data': {
+            'original_spec_nvr': ['somedata'],
+        },
+        'testcase': {'name': 'sometest'}
+    }
+
+    data = {
+        'result_id': 123,
+        'product_version': 'fool-1',
+        'waived': True,
+        'comment': 'it broke',
+    }
+    r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert r.status_code == 201
+    assert res_data['username'] == 'foo'
+    assert res_data['subject'] == {'original_spec_nvr': 'somedata'}
+    assert res_data['testcase'] == 'sometest'
+    assert res_data['product_version'] == 'fool-1'
+    assert res_data['waived'] is True
+    assert res_data['comment'] == 'it broke'
+
+
+@patch('waiverdb.api_v1.get_resultsdb_result', side_effect=HTTPError(response=Mock(status=404)))
+@patch('waiverdb.auth.get_user', return_value=('foo', {}))
+def test_create_waiver_with_unknown_result_id(mocked_get_user, mocked_resultsdb, client, session):
+    data = {
+        'result_id': 123,
+        'product_version': 'fool-1',
+        'waived': True,
+        'comment': 'it broke',
+    }
+    mocked_resultsdb.return_value.status_code = 404
+    r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
+                    content_type='application/json')
+    res_data = json.loads(r.get_data(as_text=True))
+    assert res_data['message'].startswith('Failed looking up result in Resultsdb:')
+
+
 @patch('waiverdb.auth.get_user', return_value=('foo', {}))
 def test_create_waiver_with_no_testcase(mocked_get_user, client):
     data = {
         'subject': {'foo': 'bar'},
+        'waived': True,
+        'product_version': 'the-best',
     }
     r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
                     content_type='application/json')
     res_data = json.loads(r.get_data(as_text=True))
     assert r.status_code == 400
-    assert 'Missing required parameter in the JSON body' in res_data['message']['testcase']
+    # XXX - when we ditch result_id and make subject and testcase required
+    # again, this assertion will change back to the original.
+#   assert 'Missing required parameter in the JSON body' in res_data['message']['testcase']
+    assert 'Either result_id or subject/testcase are required arguments.' in res_data['message']
 
 
 @patch('waiverdb.auth.get_user', return_value=('foo', {}))
