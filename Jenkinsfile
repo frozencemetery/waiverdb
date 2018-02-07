@@ -157,14 +157,14 @@ node('fedora') {
 }
 node('docker') {
     checkout scm
-    stage('Tag container with "master"') {
+    stage('Tag container with "latest", for dev and stage.') {
         unarchive mapping: ['appversion': 'appversion']
         def appversion = readFile('appversion').trim()
         docker.withRegistry(
                 'https://docker-registry.engineering.redhat.com/',
                 'docker-registry-factory2-builder-sa-credentials') {
             def image = docker.image("factory2/waiverdb:${appversion}")
-            image.push('master')
+            image.push('latest')
         }
     }
 }
