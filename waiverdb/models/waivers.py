@@ -8,6 +8,7 @@ from sqlalchemy_utils import JSONType
 
 class Waiver(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    result_id = db.Column(db.Integer, nullable=True)
     subject = db.Column(JSONType, nullable=False, index=True)
     testcase = db.Column(db.Text, nullable=False, index=True)
     username = db.Column(db.String(255), nullable=False)
@@ -28,9 +29,9 @@ class Waiver(db.Model):
         self.proxied_by = proxied_by
 
     def __repr__(self):
-        return '%s(subject=%r, testcase=%r, username=%r, product_version=%r, waived=%r)' % \
-               (self.__class__.__name__, self.subject, self.testcase, self.username,
-                self.product_version, self.waived)
+        return '%s(result_id=%r, subject=%r, testcase=%r, username=%r, product_version=%r,\
+                waived=%r)' % (self.__class__.__name__, self.result_id, self.subject, self.testcase,
+                               self.username, self.product_version, self.waived)
 
     @classmethod
     def by_results(cls, query, results):
