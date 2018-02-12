@@ -1,8 +1,8 @@
 
-%global upstream_version --help
+%global upstream_version 0.6.0
 
 Name:           waiverdb
-Version:        --help
+Version:        0.6.0
 Release:        1%{?dist}
 Summary:        Service for waiving results in ResultsDB
 License:        GPLv2+
