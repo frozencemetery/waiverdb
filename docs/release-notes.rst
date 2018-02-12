@@ -2,6 +2,21 @@
 Release Notes
 =============
 
+WaiverDB 0.6
+============
+
+Released 13 Feb 2018.
+
+* Dummy authentication for CLI for developing and debugging reasons.
+
+* Added logo in the README page.
+
+* You can now waive the absence of a result. Now it is possible to 
+  submit waivers using a subject/testcase.
+
+* Backward compatibility for submitting a waiver using the result_id.
+  This feature will be removed in the near future.
+
 WaiverDB 0.5
 ============
 
