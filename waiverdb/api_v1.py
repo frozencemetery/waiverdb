@@ -2,9 +2,10 @@
 
 import json
 
+import requests
 from flask import Blueprint, request, current_app
 from flask_restful import Resource, Api, reqparse, marshal_with, marshal
-from werkzeug.exceptions import BadRequest, UnsupportedMediaType, Forbidden
+from werkzeug.exceptions import BadRequest, UnsupportedMediaType, Forbidden, ServiceUnavailable
 from sqlalchemy.sql.expression import func
 
 from waiverdb import __version__
@@ -15,6 +16,7 @@ import waiverdb.auth
 
 api_v1 = (Blueprint('api_v1', __name__))
 api = Api(api_v1)
+requests_session = requests.Session()
 
 
 def valid_dict(value):
@@ -23,13 +25,22 @@ def valid_dict(value):
     return value
 
 
+def get_resultsdb_result(result_id):
+    response = requests_session.request('GET', '{0}/results/{1}'.format(
+        current_app.config['RESULTSDB_API_URL'], result_id),
+        headers={'Content-Type': 'application/json'},
+        timeout=60)
+    response.raise_for_status()
+    return response.json()
+
+
 # RP contains request parsers (reqparse.RequestParser).
 #    Parsers are added in each 'resource section' for better readability
 RP = {}
-
 RP['create_waiver'] = reqparse.RequestParser()
-RP['create_waiver'].add_argument('subject', type=valid_dict, required=True, location='json')
-RP['create_waiver'].add_argument('testcase', type=str, required=True, location='json')
+RP['create_waiver'].add_argument('subject', type=valid_dict, location='json')
+RP['create_waiver'].add_argument('testcase', type=str, location='json')
+RP['create_waiver'].add_argument('result_id', type=int, location='json')
 RP['create_waiver'].add_argument('waived', type=bool, required=True, location='json')
 RP['create_waiver'].add_argument('product_version', type=str, required=True, location='json')
 RP['create_waiver'].add_argument('comment', type=str, default=None, location='json')
@@ -206,6 +217,40 @@ class WaiversResource(Resource):
                 raise Forbidden('user %s does not have the proxyuser ability' % user)
             proxied_by = user
             user = args['username']
+
+        # XXX - remove this in a future release (it was for temp backwards compat)
+        if args['result_id']:
+            if args['subject'] or args['testcase']:
+                raise BadRequest('Only result_id or subject and '
+                                 'testcase are allowed.  Not both.')
+            try:
+                result = get_resultsdb_result(args['result_id'])
+            except requests.HTTPError as e:
+                if e.response.status_code == 404:
+                    raise BadRequest('Result id not found in Resultsdb')
+                else:
+                    raise ServiceUnavailable('Failed looking up result in Resultsdb: %s' % e)
+            except Exception as e:
+                raise ServiceUnavailable('Failed looking up result in Resultsdb: %s' % e)
+            if 'original_spec_nvr' in result['data']:
+                subject = {'original_spec_nvr': result['data']['original_spec_nvr'][0]}
+            else:
+                if result['data']['type'][0] == 'koji_build' or \
+                   result['data']['type'][0] == 'bodhi_update':
+                    SUBJECT_KEYS = ['item', 'type']
+                    subject = dict([(k, v[0]) for k, v in result['data'].items()
+                                    if k in SUBJECT_KEYS])
+                else:
+                    raise BadRequest('It is not possible to submit a waiver by '
+                                     'id for this result. Please try again specifying '
+                                     'a subject and a testcase.')
+            args['subject'] = subject
+            args['testcase'] = result['testcase']['name']
+
+        if not args['subject'] or not args['testcase']:
+            raise BadRequest('Either result_id or subject/testcase '
+                             'are required arguments.')
+
         waiver = Waiver(args['subject'], args['testcase'], user,
                         args['product_version'], args['waived'], args['comment'], proxied_by)
         db.session.add(waiver)

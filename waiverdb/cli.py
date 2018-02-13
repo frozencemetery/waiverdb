@@ -35,9 +35,9 @@ def validate_config(config):
         raise click.ClickException(config_error.format('resultsdb_api_url'))
 
 
-def check_response(resp, data):
-    if 'result_id' in data:
-        msg = 'for result with id {0}'.format(data['result_id'])
+def check_response(resp, data, result_id=None):
+    if result_id:
+        msg = 'for result with id {0}'.format(result_id)
     else:
         msg = 'for result with subject {0} and testcase {1}'.format(json.dumps(data['subject']),
                                                                     data['testcase'])
@@ -101,37 +101,19 @@ def cli(comment, waived, product_version, testcase, subject, result_id, config_f
 
     auth_method = config.get('waiverdb', 'auth_method')
     data_list = []
-    if result_ids:
-        for result_id in result_ids:
-            result = requests.request('GET', '{0}/results/{1}'.format(config.get('waiverdb',
-                                      'resultsdb_api_url'), result_id),
-                                      headers={'Content-Type': 'application/json'},
-                                      timeout=60)
-            if 'original_spec_nvr' in result.json():
-                subject = {'original_spec_nvr': result.json()['original_spec_nvr']}
-            else:
-                if result.json()['data']['type'][0] == 'koji_build' or \
-                   result.json()['data']['type'][0] == 'bodhi_update':
-                    SUBJECT_KEYS = ['item', 'type']
-                    subject = dict([(k, v[0]) for k, v in result.json()['data'].items()
-                                    if k in SUBJECT_KEYS])
-                else:
-                    raise click.ClickException('It is not possible to submit a waiver by \
-                                                id for this result. Please try again specifying \
-                                                a subject and a testcase.')
-
-            data_list.append({
-                'result_id': result_id,
-                'subject': subject,
-                'testcase': result.json()['testcase']['name'],
-                'waived': waived,
-                'product_version': product_version,
-                'comment': comment
-            })
-    else:
+    if not result_ids:
         data_list.append({
             'subject': json.loads(subject),
             'testcase': testcase,
+            'waived': waived,
+            'product_version': product_version,
+            'comment': comment
+        })
+
+    # XXX - TODO - remove this in a future release.  (for backwards compat)
+    for result_id in result_ids:
+        data_list.append({
+            'result_id': result_id,
             'waived': waived,
             'product_version': product_version,
             'comment': comment
@@ -164,7 +146,7 @@ def cli(comment, waived, product_version, testcase, subject, result_id, config_f
                 data=json.dumps(data),
                 headers={'Content-Type': 'application/json'},
                 timeout=60)
-            check_response(resp, data)
+            check_response(resp, data, data.get('result_id', None))
     elif auth_method == 'Kerberos':
         # Try to import this now so the user gets immediate feedback if
         # it isn't installed
@@ -181,14 +163,14 @@ def cli(comment, waived, product_version, testcase, subject, result_id, config_f
             if resp.status_code == 401:
                 raise click.ClickException('WaiverDB authentication using Kerberos failed. '
                                            'Make sure you have a valid Kerberos ticket.')
-            check_response(resp, data)
+            check_response(resp, data, data.get('result_id', None))
     elif auth_method == 'dummy':
         for data in data_list:
             resp = requests.request('POST', '{0}/waivers/'.format(api_url.rstrip('/')),
                                     data=json.dumps(data), auth=('user', 'pass'),
                                     headers={'Content-Type': 'application/json'},
                                     timeout=60)
-            check_response(resp, data)
+            check_response(resp, data, data.get('result_id', None))
 
 
 if __name__ == '__main__':
