@@ -157,7 +157,7 @@ node('fedora') {
 }
 node('docker') {
     checkout scm
-    stage('Tag container with "latest", for dev and stage.') {
+    stage('Tag "latest".') {
         unarchive mapping: ['appversion': 'appversion']
         def appversion = readFile('appversion').trim()
         docker.withRegistry(
