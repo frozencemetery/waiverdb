@@ -17,4 +17,4 @@ RUN dnf -y install \
     && dnf -y clean all
 USER 1001
 EXPOSE 8080
-ENTRYPOINT gunicorn --bind 0.0.0.0:8080 --access-logfile=- waiverdb.wsgi:app 2>&1
+ENTRYPOINT gunicorn --bind 0.0.0.0:8080 --access-logfile=- waiverdb.wsgi:app
