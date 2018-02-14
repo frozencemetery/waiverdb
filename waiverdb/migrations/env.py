@@ -65,6 +65,7 @@ def run_migrations_online():
                 directives[:] = []
                 logger.info('No changes in schema detected.')
 
+    logger.info('Connecting...')
     engine = engine_from_config(config.get_section(config.config_ini_section),
                                 prefix='sqlalchemy.',
                                 poolclass=pool.NullPool)
@@ -77,9 +78,14 @@ def run_migrations_online():
                       **current_app.extensions['migrate'].configure_args)
 
     try:
+        logger.info('Beginning outermost transaction.')
         with context.begin_transaction():
+            logger.info('Starting migrations.')
             context.run_migrations()
+            logger.info('Done with migrations.')
+        logger.info('Outermost transaction released.')
     finally:
+        logger.info('Closing connection.')
         connection.close()
 
 if context.is_offline_mode():
