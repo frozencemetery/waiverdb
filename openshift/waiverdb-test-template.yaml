@@ -170,6 +170,17 @@ objects:
     selector:
       environment: "test-${TEST_ID}"
       service: web
+    strategy:
+      type: Rolling
+      rollingParams:
+        pre:
+          failurePolicy: Abort
+          execNewPod:
+            containerName: web
+            command: [ /bin/sh, -i, -c, "waiverdb wait-for-db && waiverdb db upgrade" ]
+            volumes:
+            - config-volume
+            - secret-volume
     template:
       metadata:
         labels:
@@ -181,10 +192,6 @@ objects:
           image: "docker-registry.engineering.redhat.com/factory2/waiverdb:${WAIVERDB_APP_VERSION}"
           ports:
           - containerPort: 8080
-          lifecycle:
-            postStart:
-              exec:
-                command: [ /bin/sh, -i, -c, "waiverdb db upgrade" ]
           volumeMounts:
           - name: config-volume
             mountPath: /etc/waiverdb
