@@ -10,10 +10,13 @@ Create Date: 2018-02-14 12:04:34.688790
 revision = '71b84ccc31bb'
 down_revision = 'f2772c2c64a6'
 
+from alembic import op
+import sqlalchemy as sa
+
 import requests
 
 from waiverdb.api_v1 import get_resultsdb_result
-from waiverdb.models import db, Waiver
+from waiverdb.models import Waiver
 
 
 def convert_id_to_subject_and_testcase(result_id):
@@ -41,13 +44,24 @@ def convert_id_to_subject_and_testcase(result_id):
 
 
 def upgrade():
-    # querying resultsdb for the corresponding subject/testcase for each result_id
-    waivers = Waiver.query.all()
-    for waiver in waivers:
-        subject, testcase = convert_id_to_subject_and_testcase(waiver.result_id)
-        waiver.subject = subject
-        waiver.testcase = testcase
-        db.session.commit()
+    # Get a session asociated with the alembic upgrade operation.
+    connection = op.get_bind()
+    Session = sa.orm.sessionmaker()
+    session = Session(bind=connection)
+
+    try:
+        # querying resultsdb for the corresponding subject/testcase.
+        waivers = session.query(Waiver).all()
+        for waiver in waivers:
+            subject, testcase = convert_id_to_subject_and_testcase(waiver.result_id)
+            waiver.subject = subject
+            waiver.testcase = testcase
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def downgrade():
