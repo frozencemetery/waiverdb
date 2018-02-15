@@ -131,7 +131,17 @@ node('fedora') {
                         }
                         def route_hostname = objects.narrow('route').object().spec.host
                         echo "Running tests against https://${route_hostname}/"
-                        withEnv(["WAIVERDB_TEST_URL=https://${route_hostname}/"]) {
+                        def ca_chain = sh(returnStdout: true, script: """openssl s_client \
+                                -connect ${route_hostname}:443 \
+                                -servername ${route_hostname} -showcerts < /dev/null | \
+                              awk 'BEGIN {first_cert=1; in_cert=0};
+                                   /BEGIN CERTIFICATE/ { if (first_cert == 1) first_cert = 0; else in_cert = 1 };
+                                   { if (in_cert) print };
+                                   /END CERTIFICATE/ { in_cert = 0 }'""")
+                        writeFile(file: "${env.WORKSPACE}/ca-chain.crt", text: ca_chain)
+                        echo "Wrote CA certificate chain to ${env.WORKSPACE}/ca-chain.crt"
+                        withEnv(["WAIVERDB_TEST_URL=https://${route_hostname}/",
+                                 "REQUESTS_CA_BUNDLE=${env.WORKSPACE}/ca-chain.crt"]) {
                             sh 'py.test functional-tests/'
                         }
                     } finally {
