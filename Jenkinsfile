@@ -56,7 +56,7 @@ node('fedora') {
                 sh """
                 mkdir -p mock-result/f26
                 flock /etc/mock/fedora-26-x86_64.cfg \
-                /usr/bin/mock -v --resultdir=mock-result/f26 -r fedora-26-x86_64 --clean --rebuild rpmbuild-output/*.src.rpm
+                /usr/bin/mock -v --enable-network --resultdir=mock-result/f26 -r fedora-26-x86_64 --clean --rebuild rpmbuild-output/*.src.rpm
                 """
                 archiveArtifacts artifacts: 'mock-result/f26/**'
             },
