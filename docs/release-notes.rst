@@ -2,6 +2,13 @@
 Release Notes
 =============
 
+WaiverDB 0.7
+============
+
+Released 16 Feb 2018.
+
+* Fixed schema migrations for result_id backward compatibility.
+
 WaiverDB 0.6
 ============
 
