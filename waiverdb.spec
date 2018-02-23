@@ -23,11 +23,6 @@ BuildRequires:  python-sqlalchemy
 %endif
 BuildRequires:  python2-flask-restful
 BuildRequires:  python2-flask-sqlalchemy
-%if 0%{?fedora} > 27
-BuildRequires:  python2-sqlalchemy-utils
-%else
-BuildRequires:  python-sqlalchemy-utils
-%endif
 BuildRequires:  python2-kerberos
 BuildRequires:  python2-systemd
 BuildRequires:  python2-pytest
@@ -43,7 +38,6 @@ BuildRequires:  python-flask
 BuildRequires:  python-sqlalchemy
 BuildRequires:  python-flask-restful
 BuildRequires:  python-flask-sqlalchemy
-BuildRequires:  python-sqlalchemy-utils
 BuildRequires:  python-kerberos
 BuildRequires:  systemd-python
 BuildRequires:  pytest
@@ -67,11 +61,6 @@ Requires:       python-sqlalchemy
 %endif
 Requires:       python2-flask-restful
 Requires:       python2-flask-sqlalchemy
-%if 0%{?fedora} > 27
-Requires:       python2-sqlalchemy-utils
-%else
-Requires:       python-sqlalchemy-utils
-%endif
 Requires:       python2-kerberos
 Requires:       python2-systemd
 Requires:       python2-mock

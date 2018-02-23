@@ -3,13 +3,13 @@
 import datetime
 from .base import db
 from sqlalchemy import or_, and_
-from sqlalchemy_utils import JSONType
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class Waiver(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     result_id = db.Column(db.Integer, nullable=True)
-    subject = db.Column(JSONType, nullable=False, index=True)
+    subject = db.Column(JSONB, nullable=False, index=True)
     testcase = db.Column(db.Text, nullable=False, index=True)
     username = db.Column(db.String(255), nullable=False)
     proxied_by = db.Column(db.String(255))
