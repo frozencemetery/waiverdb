@@ -88,12 +88,6 @@ def create_app(config_obj=None):
     return app
 
 
-def init_db(app):
-    with app.app_context():
-        db.create_all()
-    return db
-
-
 def healthcheck():
     """
     Request handler for performing an application-level health check. This is

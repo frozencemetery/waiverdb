@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+from copy import copy
 import pytest
-from waiverdb.app import create_app, init_db
+from sqlalchemy import create_engine
+from waiverdb.app import create_app
 
 
 @pytest.fixture(scope='session')
@@ -21,7 +23,17 @@ def app(request):
 @pytest.fixture(scope='session')
 def db(app):
     """Session-wide test database."""
-    db = init_db(app)
+    from waiverdb.models import db
+    dbname = db.engine.url.database
+    # In order to drop and re-create the database, we have to connect to
+    # template1 database in special AUTOCOMMIT isolation level.
+    dburl = copy(db.engine.url)
+    dburl.database = 'template1'
+    with create_engine(dburl).connect() as connection:
+        connection.execution_options(isolation_level='AUTOCOMMIT')
+        connection.execute('DROP DATABASE IF EXISTS {}'.format(dbname))
+        connection.execute('CREATE DATABASE {}'.format(dbname))
+    db.create_all()
     return db
 
 

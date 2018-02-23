@@ -14,18 +14,30 @@ Install dependencies:
 
     $ sudo dnf builddep waiverdb.spec
 
-Run the server::
+Configure Postgres on the local machine, with a `waiverdb` database:
+
+    $ sudo dnf install postgresql-server
+    $ sudo postgresql-setup --initdb
+    $ sudo systemctl enable --now postgresql
+    $ sudo -u postgres createuser --superuser $USER
+    $ createdb waiverdb
+
+Create a local configuration file:
 
     $ cp conf/settings.py.example conf/settings.py
-    $ PYTHONPATH=. DEV=true python waiverdb/manage.py run -h localhost -p 5004 --debugger
 
-Migrate the db::
+Populate the database:
 
     $ PYTHONPATH=. DEV=true python waiverdb/manage.py db upgrade
 
+Run the server:
+
+    $ PYTHONPATH=. DEV=true python waiverdb/manage.py run -h localhost -p 5004 --debugger
+
 The server is now running at <http://localhost:5004> and API calls can be sent to
-<http://localhost:5004/api/v1.0>. All data is stored inside `/var/tmp/waiverdb_db.sqlite`.
-You can verify the server is running correctly by visiting <http://localhost:5004/api/v1.0/about>.
+<http://localhost:5004/api/v1.0>. All data is stored in the `waiverdb` Postgres 
+database on the local machine. You can verify the server is running correctly 
+by visiting <http://localhost:5004/api/v1.0/about>.
 
 
 ## Adjusting configuration
@@ -39,6 +51,10 @@ values in `waiverdb/config.py`.
 You can run this test suite with the following command::
 
     $ py.test tests/
+
+The test suite will drop and re-create a Postgres database named 
+`waiverdb_test`. By default, it expects to have superuser access to Postgres on 
+the local machine.
 
 To test against all supported versions of Python, you can use tox::
 
