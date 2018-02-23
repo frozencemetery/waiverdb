@@ -2,6 +2,17 @@
 Release Notes
 =============
 
+WaiverDB 0.8
+============
+
+Released 16 Feb 2018.
+
+* Removed support to SQLite in favor of PostgreSQL.
+
+* Fixed and improved interaction with PostgreSQL.
+
+* Added information on the README file on how to configure the db.
+
 WaiverDB 0.7
 ============
 
