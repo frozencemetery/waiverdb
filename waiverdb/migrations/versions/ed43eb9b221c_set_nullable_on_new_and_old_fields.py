@@ -14,17 +14,12 @@ from alembic import op
 
 
 def upgrade():
-    # SQLite has some problem in dropping/altering columns.
-    # So in this way Alembic should do some behind the scenes
-    # with: make new table - copy data - drop old table - rename new table
-    with op.batch_alter_table('waiver') as batch_op:
-        batch_op.alter_column('subject', nullable=False)
-        batch_op.alter_column('testcase', nullable=False)
-        batch_op.alter_column('result_id', nullable=True)
+    op.alter_column('waiver', 'subject', nullable=False)
+    op.alter_column('waiver', 'testcase', nullable=False)
+    op.alter_column('waiver', 'result_id', nullable=True)
 
 
 def downgrade():
-    with op.batch_alter_table('waiver') as batch_op:
-        batch_op.alter_column('subject', nullable=True)
-        batch_op.alter_column('testcase', nullable=True)
-        batch_op.alter_column('result_id', nullable=False)
+    op.alter_column('waiver', 'subject', nullable=True)
+    op.alter_column('waiver', 'testcase', nullable=True)
+    op.alter_column('waiver', 'result_id', nullable=False)

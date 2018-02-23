@@ -26,3 +26,6 @@ click
 configparser
 openidc-client
 requests-kerberos
+
+# Database
+psycopg2-binary
