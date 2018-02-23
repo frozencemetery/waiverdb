@@ -146,9 +146,10 @@ install -m0644 \
     conf/client.conf.example \
     %{buildroot}%{_sysconfdir}/waiverdb/client.conf
 
-%check
-export PYTHONPATH=%{buildroot}/%{python2_sitelib}
-py.test tests/
+# Tests don't make sense here now that we require postgres to run them.
+#%%check
+#export PYTHONPATH=%%{buildroot}/%%{python2_sitelib}
+#py.test tests/
 
 %files
 %{python2_sitelib}/%{name}
