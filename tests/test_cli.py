@@ -149,8 +149,8 @@ resultsdb_api_url=http://localhost:5001/api/v2.0
 
 
 def test_oidc_auth_is_enabled(tmpdir):
-    # Skip if waiverdb is rebuilt for an environment where Kerberos authentication
-    # is used and python-openidc-client is not available.
+    # Skip if waiverdb is rebuilt for an environment where GSSAPI
+    # authentication is used and python-openidc-client is not available.
     pytest.importorskip('openidc_client')
     with patch('openidc_client.OpenIDCClient.send_request') as mock_oidc_req:
         mock_rv = Mock()
@@ -197,10 +197,10 @@ resultsdb_api_url=http://localhost:5001/api/v2.0
         assert result.output == 'Created waiver 15 for result with subject {"subject.test": "test", "s": "t"} and testcase test.testcase\n' # noqa
 
 
-def test_kerberos_is_enabled(tmpdir):
+def test_gssapi_is_enabled(tmpdir):
     # Skip if waiverdb is rebuilt for an environment where OIDC authentication
-    # is used and python-requests-kerberos is not available.
-    pytest.importorskip('requests_kerberos')
+    # is used and python-requests-gssapi is not available.
+    pytest.importorskip('requests_gssapi')
     with patch('requests.request') as mock_request:
         mock_rv = Mock()
         mock_rv.json.return_value = {

@@ -151,17 +151,19 @@ def cli(comment, waived, product_version, testcase, subject, result_id, config_f
         # Try to import this now so the user gets immediate feedback if
         # it isn't installed
         try:
-            import requests_kerberos  # noqa: F401
+            import requests_gssapi  # noqa: F401
         except ImportError:
-            raise click.ClickException('python-requests-kerberos needs to be installed')
-        auth = requests_kerberos.HTTPKerberosAuth(mutual_authentication=requests_kerberos.OPTIONAL)
+            raise click.ClickException(
+                'python-requests-gssapi needs to be installed')
+        auth = requests_gssapi.HTTPKerberosAuth(
+            mutual_authentication=requests_gssapi.OPTIONAL)
         for data in data_list:
             resp = requests.request('POST', '{0}/waivers/'.format(api_url.rstrip('/')),
                                     data=json.dumps(data), auth=auth,
                                     headers={'Content-Type': 'application/json'},
                                     timeout=60)
             if resp.status_code == 401:
-                raise click.ClickException('WaiverDB authentication using Kerberos failed. '
+                raise click.ClickException('WaiverDB authentication using GSSAPI failed. '
                                            'Make sure you have a valid Kerberos ticket.')
             check_response(resp, data, data.get('result_id', None))
     elif auth_method == 'dummy':

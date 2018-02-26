@@ -25,7 +25,7 @@ sphinxcontrib-httpdomain
 click
 configparser
 openidc-client
-requests-kerberos
+requests-gssapi
 
 # Database
 psycopg2-binary
