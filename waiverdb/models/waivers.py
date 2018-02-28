@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 import datetime
-from .base import db
-from sqlalchemy import or_, and_
-from sqlalchemy.dialects.postgresql import JSONB
+from .base import db, EqualityComparableJSONType
+from sqlalchemy import or_, and_, cast
 
 
 class Waiver(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     result_id = db.Column(db.Integer, nullable=True)
-    subject = db.Column(JSONB, nullable=False, index=True)
+    subject = db.Column(EqualityComparableJSONType, nullable=False)
     testcase = db.Column(db.Text, nullable=False, index=True)
     username = db.Column(db.String(255), nullable=False)
     proxied_by = db.Column(db.String(255))
@@ -17,6 +16,9 @@ class Waiver(db.Model):
     waived = db.Column(db.Boolean, nullable=False, default=False)
     comment = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    __table_args__ = (
+        db.Index('ix_waiver_subject', cast(subject, db.Text)),
+    )
 
     def __init__(self, subject, testcase, username, product_version, waived=False,
                  comment=None, proxied_by=None):

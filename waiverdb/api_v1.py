@@ -6,7 +6,7 @@ import requests
 from flask import Blueprint, request, current_app
 from flask_restful import Resource, Api, reqparse, marshal_with, marshal
 from werkzeug.exceptions import BadRequest, UnsupportedMediaType, Forbidden, ServiceUnavailable
-from sqlalchemy.sql.expression import func
+from sqlalchemy.sql.expression import func, cast
 
 from waiverdb import __version__
 from waiverdb.models import db, Waiver
@@ -143,7 +143,7 @@ class WaiversResource(Resource):
             if since_end:
                 query = query.filter(Waiver.timestamp <= since_end)
         if not args['include_obsolete']:
-            subquery = db.session.query(func.max(Waiver.id)).group_by(Waiver.subject,
+            subquery = db.session.query(func.max(Waiver.id)).group_by(cast(Waiver.subject, db.Text),
                                                                       Waiver.testcase)
             query = query.filter(Waiver.id.in_(subquery))
         query = query.order_by(Waiver.timestamp.desc())
@@ -396,7 +396,7 @@ class GetWaiversBySubjectsAndTestcases(Resource):
             if since_end:
                 query = query.filter(Waiver.timestamp <= since_end)
         if not data.get('include_obsolete', False):
-            subquery = db.session.query(func.max(Waiver.id)).group_by(Waiver.subject,
+            subquery = db.session.query(func.max(Waiver.id)).group_by(cast(Waiver.subject, db.Text),
                                                                       Waiver.testcase)
             query = query.filter(Waiver.id.in_(subquery))
 
