@@ -95,8 +95,7 @@ A number of issues have been resolved in this release:
 * Fixed the health check API to return a proper error if the application is not
   able to serve requests (#75).
 
-Other updates
--------------
+Other updates:
 
 * Supports a new HTTP API `/api/v1.0/waivers/+by-result-ids`.
 * Package dependencies are switched to python2-* packages in Fedora.
