@@ -42,7 +42,8 @@ class EqualityComparableJSONType(_PGJSON):
 
     def bind_processor(self, dialect):
         def process(value):
-            if value is self.NULL:
+            # JSON.NULL is a sentinel object meaning JSON "null" (SQLAlchemy 1.1+ only)
+            if hasattr(self, 'NULL') and value is self.NULL:
                 value = None
             elif isinstance(value, Null) or (value is None and self.none_as_null):
                 return None
