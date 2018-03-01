@@ -18,7 +18,8 @@ Released 16 Feb 2018.
 
 * Removed support to SQLite in favor of PostgreSQL.
 
-* Fixed and improved interaction with PostgreSQL.
+* Fixed database migration to use the correct column type for the
+  ``waiver.subject`` column (#129).
 
 * Added information on the README file on how to configure the db.
 
@@ -27,7 +28,9 @@ WaiverDB 0.7
 
 Released 16 Feb 2018.
 
-* Fixed schema migrations for result_id backward compatibility.
+* Fixed the database migration strategy for Openshift deployment (#121).
+  The migration step is now run in a pre-deployment hook. Previously it ran in
+  a post-start pod hook which did not work correctly in some situations.
 
 WaiverDB 0.6
 ============
