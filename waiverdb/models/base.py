@@ -51,7 +51,7 @@ class EqualityComparableJSONType(_PGJSON):
         return process
 
     def result_processor(self, dialect, coltype):
-        if dialect._has_native_json:
+        if dialect._has_native_json:  # pylint: disable=W0212
             return None
 
         def process(value):
