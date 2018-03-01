@@ -2,6 +2,15 @@
 Release Notes
 =============
 
+WaiverDB 0.9
+============
+
+Released 1 Mar 2018.
+
+*  The usage of ``JSONB`` has been replaced with the older ``JSON`` column
+   type, in order to maintain compatibility with PostgreSQL 9.2 on RHEL7
+   (#134).
+
 WaiverDB 0.8
 ============
 
