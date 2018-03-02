@@ -24,7 +24,7 @@ BuildRequires:  python-sqlalchemy
 BuildRequires:  python2-flask-restful
 BuildRequires:  python2-flask-sqlalchemy
 BuildRequires:  python2-psycopg2
-BuildRequires:  python2-kerberos
+BuildRequires:  python2-gssapi
 BuildRequires:  python2-systemd
 BuildRequires:  python2-pytest
 BuildRequires:  python2-mock
@@ -40,7 +40,7 @@ BuildRequires:  python-sqlalchemy
 BuildRequires:  python-flask-restful
 BuildRequires:  python-flask-sqlalchemy
 BuildRequires:  python-psycopg2
-BuildRequires:  python-kerberos
+BuildRequires:  python-gssapi
 BuildRequires:  systemd-python
 BuildRequires:  pytest
 BuildRequires:  python-mock
@@ -64,7 +64,7 @@ Requires:       python-sqlalchemy
 Requires:       python2-flask-restful
 Requires:       python2-flask-sqlalchemy
 Requires:       python2-psycopg2
-Requires:       python2-kerberos
+Requires:       python2-gssapi
 Requires:       python2-systemd
 Requires:       python2-mock
 Requires:       python2-flask-oidc
@@ -78,7 +78,7 @@ Requires:       python-sqlalchemy
 Requires:       python-flask-restful
 Requires:       python-flask-sqlalchemy
 Requires:       python-psycopg2
-Requires:       python-kerberos
+Requires:       python-gssapi
 Requires:       systemd-python
 Requires:       python-mock
 Requires:       python-flask-oidc

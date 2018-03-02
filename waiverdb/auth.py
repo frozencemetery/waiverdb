@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0+
 
 
+import base64
 import os
-import kerberos
+import gssapi
 from flask import current_app, Response, g
 # Starting with Flask 0.9, the _app_ctx_stack is the correct one,
 # before that we need to use the _request_ctx_stack.
@@ -13,73 +14,42 @@ except ImportError:
 from socket import gethostname
 from werkzeug.exceptions import Unauthorized, Forbidden
 
-
 # Inspired by https://github.com/mkomitee/flask-kerberos/blob/master/flask_kerberos.py
-class KerberosAuthenticate(object):
+# Later cleaned and ported to python-gssapi
+def process_gssapi_request(token):
+    if current_app.config['KERBEROS_HTTP_HOST']:
+        hostname = current_app.config['KERBEROS_HTTP_HOST']
+    else:
+        hostname = gethostname()
 
-    def __init__(self):
-        if current_app.config['KERBEROS_HTTP_HOST']:
-            hostname = current_app.config['KERBEROS_HTTP_HOST']
-        else:
-            hostname = gethostname()
-        self.service_name = "HTTP@%s" % (hostname)
-        if 'KRB5_KTNAME' in os.environ:
-            try:
-                principal = kerberos.getServerPrincipalDetails('HTTP', hostname)
-            except kerberos.KrbError as exc:
-                raise Unauthorized("Authentication Kerberos Failure: %s" % exc.message[0])
-            else:
-                current_app.logger.debug("Kerberos: server is identifying as %s" % principal)
-        else:
-            raise Unauthorized("Kerberos: set KRB5_KTNAME to your keytab file")
+    service_name = gssapi.Name("HTTP@%s" % hostname,
+                               gssapi.NameType.hostbased_service)
 
-    def _gssapi_authenticate(self, token):
-        '''
-        Performs GSSAPI Negotiate Authentication
-        On success also stashes the server response token for mutual authentication
-        at the top of request context with the name kerberos_token, along with the
-        authenticated user principal with the name kerberos_user.
-        '''
-        state = None
-        ctx = stack.top
-        try:
-            rc, state = kerberos.authGSSServerInit(self.service_name)
-            if rc != kerberos.AUTH_GSS_COMPLETE:
-                current_app.logger.error('Unable to initialize server context')
-                return None
-            rc = kerberos.authGSSServerStep(state, token)
-            if rc == kerberos.AUTH_GSS_COMPLETE:
-                current_app.logger.debug('Completed GSSAPI negotiation')
-                ctx.kerberos_token = kerberos.authGSSServerResponse(state)
-                ctx.kerberos_user = kerberos.authGSSServerUserName(state)
-                return rc
-            elif rc == kerberos.AUTH_GSS_CONTINUE:
-                current_app.logger.debug('Continuing GSSAPI negotiation')
-                return kerberos.AUTH_GSS_CONTINUE
-            else:
-                current_app.logger.debug('Unable to step server context')
-                return None
-        except kerberos.GSSError as e:
-            current_app.logger.error('Unable to authenticate: %s', e)
-            return None
-        finally:
-            if state:
-                kerberos.authGSSServerClean(state)
+    try:
+        stage = "initialize server context"
+        sc = gssapi.SecurityContext(usage="accept")
 
-    def process_request(self, token):
-        """
-        Authenticates the current request using Kerberos.
-        """
-        kerberos_user = None
-        kerberos_token = None
-        ctx = stack.top
-        rc = self._gssapi_authenticate(token)
-        if rc == kerberos.AUTH_GSS_COMPLETE:
-            kerberos_user = ctx.kerberos_user
-            kerberos_token = ctx.kerberos_token
-        elif rc != kerberos.AUTH_GSS_CONTINUE:
-            raise Forbidden("Invalid Kerberos ticket")
-        return kerberos_user, kerberos_token
+        stage = "step context"
+        token = sc.step(token if token != "" else None)
+        token = token if token is not None else ""
+
+        # The current architecture cannot support continuation here
+        stage = "checking completion"
+        if not sc.complete:
+            current_app.logger.error(
+                'Multiple GSSAPI round trips not supported')
+            raise Forbidden("Attempted multiple GSSAPI round trips")
+
+        current_app.logger.debug('Completed GSSAPI negotiation')
+
+        stage = "getting remote user"
+        user = str(sc.initiator_name)
+        return user, token
+    except gssapi.exceptions.GSSError as e:
+        current_app.logger.error(
+            'Unable to authenticate: failed to %s: %s' %
+            (stage, e.gen_msg()))
+        raise Forbidden("Authentication failed")
 
 
 def get_user(request):
@@ -107,11 +77,11 @@ def get_user(request):
             raise Unauthorized(response=response)
         header = request.headers.get("Authorization")
         token = ''.join(header.strip().split()[1:])
-        user, kerberos_token = KerberosAuthenticate().process_request(token)
+        user, token = process_gssapi_request(base64.b64decode(token))
         # remove realm
         user = user.split("@")[0]
-        if kerberos_token is not None:
-            headers = {'WWW-Authenticate': ' '.join(['negotiate', kerberos_token])}
+        headers = {'WWW-Authenticate': ' '.join(
+            ['negotiate', base64.b64encode(token).decode()])}
     elif current_app.config['AUTH_METHOD'] == 'SSL':
         # Nginx sets SSL_CLIENT_VERIFY and SSL_CLIENT_S_DN in request.environ
         # when doing SSL authentication.

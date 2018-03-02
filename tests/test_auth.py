@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0+
 
+from base64 import b64encode
 import pytest
-import kerberos
+import gssapi
 import mock
 import json
 from werkzeug.exceptions import Unauthorized
@@ -10,32 +11,18 @@ import flask_oidc
 
 
 @pytest.mark.usefixtures('enable_kerberos')
-class TestKerberosAuthentication(object):
-
-    def test_keytab_file_is_not_set_should_raise_error(self):
-        with pytest.raises(Unauthorized):
-            request = mock.MagicMock()
-            headers = {'Authorization': "babablaba"}
-            request.headers.return_value = mock.MagicMock(spec_set=dict)
-            request.headers.__getitem__.side_effect = headers.__getitem__
-            request.headers.__setitem__.side_effect = headers.__setitem__
-            request.headers.__contains__.side_effect = headers.__contains__
-            waiverdb.auth.get_user(request)
-
+class TestGSSAPIAuthentication(object):
     def test_unauthorized(self, client, monkeypatch):
         monkeypatch.setenv('KRB5_KTNAME', '/etc/foo.keytab')
         r = client.post('/api/v1.0/waivers/', content_type='application/json')
         assert r.status_code == 401
         assert r.headers.get('www-authenticate') == 'Negotiate'
 
-    @mock.patch('kerberos.authGSSServerInit', return_value=(kerberos.AUTH_GSS_COMPLETE, object()))
-    @mock.patch('kerberos.authGSSServerStep', return_value=kerberos.AUTH_GSS_COMPLETE)
-    @mock.patch('kerberos.authGSSServerResponse', return_value='STOKEN')
-    @mock.patch('kerberos.authGSSServerUserName', return_value='foo@EXAMPLE.ORG')
-    @mock.patch('kerberos.authGSSServerClean')
-    @mock.patch('kerberos.getServerPrincipalDetails')
-    def test_authorized(self, principal, clean, name, response, step, init,
-                        client, monkeypatch, session):
+    @mock.patch.multiple("gssapi.SecurityContext", complete=True,
+                         __init__=mock.Mock(return_value=None),
+                         step=mock.Mock(return_value=b"STOKEN"),
+                         initiator_name="foo@EXAMPLE.ORG")
+    def test_authorized(self, client, monkeypatch):
         monkeypatch.setenv('KRB5_KTNAME', '/etc/foo.keytab')
         data = {
             'subject': {'subject.test': 'subject'},
@@ -44,11 +31,13 @@ class TestKerberosAuthentication(object):
             'waived': True,
             'comment': 'it broke',
         }
+        headers = {'Authorization':
+                   'Negotiate %s' % b64encode("CTOKEN").decode()}
         r = client.post('/api/v1.0/waivers/', data=json.dumps(data),
-                        content_type='application/json',
-                        headers={'Authorization': 'Negotiate CTOKEN'})
+                        content_type='application/json', headers=headers)
         assert r.status_code == 201
-        assert r.headers.get('WWW-Authenticate') == 'negotiate STOKEN'
+        assert r.headers.get('WWW-Authenticate') == \
+            'negotiate %s' % b64encode("STOKEN").decode()
         res_data = json.loads(r.data.decode('utf-8'))
         assert res_data['username'] == 'foo'
 
